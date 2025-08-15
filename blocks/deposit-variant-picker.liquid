@@ -8,6 +8,10 @@ Can be added in Theme Editor under Product Information > Details
 
 {% liquid
   assign product = closest.product
+  if request.visual_preview_mode and product == blank
+    assign product = collections.all.products.first
+  endif
+  
   assign deposit_product = all_products['refundable-core-deposit']
   assign first_variant = product.selected_or_first_available_variant
   
@@ -49,7 +53,7 @@ Can be added in Theme Editor under Product Information > Details
   {% endfor %}
 </script>
 
-<div class="deposit-variant-picker" {% if initial_deposit == 0 %}style="display: none;"{% endif %}>
+<div class="deposit-variant-picker" {{ block.shopify_attributes }} {% if initial_deposit == 0 %}style="display: none;"{% endif %}>
   
   {% if block.settings.show_title %}
     <h3 class="deposit-title">{{ block.settings.deposit_title }}</h3>
@@ -204,10 +208,12 @@ document.addEventListener('DOMContentLoaded', function() {
 {% schema %}
 {
   "name": "Deposit Variant Picker",
-  "tag": "div",
-  "class": "deposit-variant-picker-block",
-  "category": "product",
+  "tag": null,
   "settings": [
+    {
+      "type": "paragraph",
+      "content": "Shows deposit payment options for products with 'has_deposit_options' tag"
+    },
     {
       "type": "header",
       "content": "Display Options"
