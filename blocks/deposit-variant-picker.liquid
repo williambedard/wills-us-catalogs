@@ -13,15 +13,9 @@ Can be added in Theme Editor under Product Information > Details
   endif
   
   comment
-  # Try to find deposit product by different possible handles
+  # Get deposit product from block settings
   endcomment
-  assign deposit_product = all_products['refundable-core-deposit']
-  if deposit_product == blank
-    assign deposit_product = all_products['core-deposit']
-  endif
-  if deposit_product == blank
-    assign deposit_product = all_products['deposit']
-  endif
+  assign deposit_product = block.settings.deposit_product
   assign first_variant = product.selected_or_first_available_variant
   
   comment
@@ -82,21 +76,25 @@ Can be added in Theme Editor under Product Information > Details
     
     <select id="deposit-variant-select" name="deposit_option" class="deposit-variant-dropdown" required>
       <option value="" disabled selected>{{ block.settings.placeholder_text | default: 'Please select a deposit option...' }}</option>
-      {% for variant in deposit_product.variants %}
-        <option value="{{ variant.title | downcase | replace: ' ', '_' }}" 
-                data-variant-id="{{ variant.id }}">
-          {% case variant.title %}
-            {% when 'Credit card on file' %}
-              {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
-            {% when 'Pay core deposit upfront' %}
-              {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
-            {% when 'Return cores in advance' %}
-              {{ block.settings.option3_label | default: variant.title }} - No deposit required
-            {% else %}
-              {{ variant.title }}
-          {% endcase %}
-        </option>
-      {% endfor %}
+      {% if deposit_product %}
+        {% for variant in deposit_product.variants %}
+          <option value="{{ variant.title | downcase | replace: ' ', '_' }}" 
+                  data-variant-id="{{ variant.id }}">
+            {% case variant.title %}
+              {% when 'Credit card on file' %}
+                {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+              {% when 'Pay core deposit upfront' %}
+                {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+              {% when 'Return cores in advance' %}
+                {{ block.settings.option3_label | default: variant.title }} - No deposit required
+              {% else %}
+                {{ variant.title }}
+            {% endcase %}
+          </option>
+        {% endfor %}
+      {% else %}
+        <option disabled>Deposit product not found</option>
+      {% endif %}
     </select>
   </div>
 
@@ -217,11 +215,17 @@ document.addEventListener('DOMContentLoaded', function() {
 {% schema %}
 {
   "name": "Deposit Variant Picker",
-  "tag": null,
+  "tag": "div",
   "settings": [
     {
       "type": "paragraph",
       "content": "Shows deposit payment options for products with 'has_deposit_options' tag"
+    },
+    {
+      "type": "product",
+      "id": "deposit_product",
+      "label": "Deposit Product",
+      "info": "Select the product containing deposit variants (e.g., credit card hold, pay now, return first)"
     },
     {
       "type": "header",
