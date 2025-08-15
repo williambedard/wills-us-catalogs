@@ -58,10 +58,6 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
     {% comment %}Extract values using same JSON parsing method{% endcomment %}
-    {% assign fp_val = 0 %}
-    {% assign inj_val = 0 %}
-    {% assign fl_val = 0 %}
-    
     {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount | default: 0 %}
     {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value.amount | default: 0 %}
     {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount | default: 0 %}
