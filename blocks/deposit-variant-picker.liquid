@@ -57,15 +57,27 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
-    {% comment %}Extract values using same JSON parsing method{% endcomment %}
-    {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount | default: 0 %}
-    {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value.amount | default: 0 %}
-    {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount | default: 0 %}
+    {% comment %}Extract MONEY metafield amounts with proper error handling{% endcomment %}
+    {% assign fp_val = 0 %}
+    {% assign inj_val = 0 %}
+    {% assign fl_val = 0 %}
+    
+    {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
+      {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount %}
+    {% endif %}
+    
+    {% if variant.metafields.custom.deposit_for_injectors %}
+      {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value.amount %}
+    {% endif %}
+    
+    {% if variant.metafields.custom.deposit_for_fuel_lines %}
+      {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount %}
+    {% endif %}
     
     window.productMetafields["{{ variant.id }}"] = {
-      "fuel_pump_deposit": {{ fp_val }},
-      "injector_deposit": {{ inj_val }},
-      "fuel_line_deposit": {{ fl_val }}
+      "fuel_pump_deposit": {{ fp_val | json }},
+      "injector_deposit": {{ inj_val | json }},
+      "fuel_line_deposit": {{ fl_val | json }}
     };
   {% endfor %}
 </script>
