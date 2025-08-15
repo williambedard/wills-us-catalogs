@@ -57,7 +57,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 <!-- DEBUG: Test .value access - Fuel pump .value: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value }} -->
 <!-- DEBUG: Test .value.amount access - Injector .value.amount: {{ first_variant.metafields.custom.deposit_for_injectors.value.amount }} -->
 <script>
-  window.productMetafields = window.productMetafields || {};
+  window.variantMetafields = window.variantMetafields || {};
   {% for variant in product.variants %}
     {% comment %}Extract MONEY metafield amounts with proper error handling{% endcomment %}
     {% assign fp_val = 0 %}
@@ -76,7 +76,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
       {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount %}
     {% endif %}
     
-    window.productMetafields["{{ variant.id }}"] = {
+    window.variantMetafields["{{ variant.id }}"] = {
       "fuel_pump_deposit": {{ fp_val | json }},
       "injector_deposit": {{ inj_val | json }},
       "fuel_line_deposit": {{ fl_val | json }}
@@ -145,9 +145,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const variantInput = document.querySelector('input[name="id"]');
     let totalDeposit = 0;
     
-    if (variantInput && variantInput.value && window.productMetafields) {
+    if (variantInput && variantInput.value && window.variantMetafields) {
       const variantId = variantInput.value;
-      const metafields = window.productMetafields[variantId];
+      const metafields = window.variantMetafields[variantId];
       if (metafields) {
         totalDeposit = (parseFloat(metafields.fuel_pump_deposit) || 0) + 
                       (parseFloat(metafields.injector_deposit) || 0) + 
