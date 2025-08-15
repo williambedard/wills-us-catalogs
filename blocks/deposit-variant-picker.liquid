@@ -12,7 +12,16 @@ Can be added in Theme Editor under Product Information > Details
     assign product = collections.all.products.first
   endif
   
+  comment
+  # Try to find deposit product by different possible handles
+  endcomment
   assign deposit_product = all_products['refundable-core-deposit']
+  if deposit_product == blank
+    assign deposit_product = all_products['core-deposit']
+  endif
+  if deposit_product == blank
+    assign deposit_product = all_products['deposit']
+  endif
   assign first_variant = product.selected_or_first_available_variant
   
   comment
