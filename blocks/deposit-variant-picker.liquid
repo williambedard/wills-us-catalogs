@@ -54,6 +54,8 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 <!-- DEBUG: Fuel line deposit: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
 <!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
 <!-- DEBUG: Individual amounts - Fuel pump: {{ fuel_pump_deposit }}, Injector: {{ injector_deposit }}, Fuel line: {{ fuel_line_deposit }} -->
+<!-- DEBUG: Test .value access - Fuel pump .value: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value }} -->
+<!-- DEBUG: Test .value.amount access - Injector .value.amount: {{ first_variant.metafields.custom.deposit_for_injectors.value.amount }} -->
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
