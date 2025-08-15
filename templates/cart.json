@@ -64,6 +64,10 @@
         "padding-block-end": 0
       }
     },
+    "cart_deposit_handler": {
+      "type": "cart-deposit-handler",
+      "settings": {}
+    },
     "product_list_NNFgcy": {
       "type": "product-list",
       "blocks": {
@@ -318,6 +322,7 @@
   },
   "order": [
     "cart-section",
+    "cart_deposit_handler",
     "product_list_NNFgcy"
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "name": "core-deposit-cart-transform",
+  "version": "1.0.0",
+  "description": "Cart Transform Function for Core Deposit Price Override",
+  "main": "src/run.js",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build step required for JavaScript functions'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": [
+    "shopify",
+    "function",
+    "cart-transform",
+    "deposit",
+    "pricing"
+  ],
+  "author": "Injectors Direct",
+  "license": "MIT"
+}

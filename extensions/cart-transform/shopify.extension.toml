@@ -1,0 +1,51 @@
+# Cart Transform Function Extension
+# Overrides deposit product pricing based on calculated amounts
+
+name = "Core Deposit Price Override"
+type = "function"
+api_version = "2024-10"
+metafields = []
+
+[build]
+command = ""
+path = "src"
+
+[build.watch]
+ignore = []
+
+[[extensions]]
+name = "cart-transform"
+type = "function"
+
+[extensions.targeting]
+target = "purchase.cart-transform.run"
+
+[extensions.input.metafields]
+
+[extensions.input.variables]
+
+[extensions.function]
+input_query = """
+  query Input {
+    cart {
+      lines {
+        id
+        quantity
+        merchandise {
+          ... on ProductVariant {
+            id
+            product {
+              id
+              handle
+              tags
+            }
+          }
+        }
+        attributes {
+          key
+          value
+        }
+      }
+    }
+  }
+"""

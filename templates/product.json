@@ -498,6 +498,31 @@
         "padding-block-end": 0
       }
     },
+    "deposit_calculator_section": {
+      "type": "deposit-calculator-simple",
+      "settings": {
+        "show_deposit_info": true,
+        "deposit_title": "Core Deposit Required",
+        "deposit_description": "Core Deposit",
+        "options_title": "Choose your deposit option:",
+        "option1_title": "Credit Card Hold",
+        "option1_description": "We'll hold",
+        "option2_title": "Pay Now", 
+        "option2_description": "Pay deposit of",
+        "option3_title": "Return Cores First",
+        "option3_description": "No deposit required - return your old cores first",
+        "background_color": "#f9f9f9",
+        "title_color": "#333333",
+        "text_color": "#666666",
+        "amount_color": "#d73502",
+        "show_border": true,
+        "border_color": "#e0e0e0",
+        "border_radius": 8,
+        "padding": 20,
+        "margin_top": 20,
+        "margin_bottom": 20
+      }
+    },
     "product_recommendations_qggXJq": {
       "type": "product-recommendations",
       "blocks": {
@@ -699,6 +724,7 @@
   },
   "order": [
     "main",
+    "deposit_calculator_section",
     "product_recommendations_qggXJq"
   ]
 }
