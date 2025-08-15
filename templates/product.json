@@ -220,11 +220,6 @@
               },
               "blocks": {}
             },
-            "globo_product_option_app_block_xWcdNK": {
-              "type": "shopify://apps/globo-product-option/blocks/app-block/fdc9fad5-1a0f-4bd4-9c8a-1af6a6eef6b8",
-              "disabled": true,
-              "settings": {}
-            },
             "buy_buttons_eYQEYi": {
               "type": "buy-buttons",
               "settings": {
@@ -497,18 +492,6 @@
                 "padding-inline-end": 0
               },
               "blocks": {}
-            },
-            "tryonify_selling_plans_TibVn7": {
-              "type": "shopify://apps/tryonify/blocks/selling-plans/8750bf29-ce4b-49e8-8350-7899e67a4bc5",
-              "settings": {
-                "style": "expanded",
-                "show_buy_now_price": false,
-                "default_trial": false,
-                "button_text": "Try For Free",
-                "button_class": "tryonify-button",
-                "show_trial_quantity": true,
-                "trial_quantity_text": "Limit of %d trials per order."
-              }
             }
           },
           "block_order": [
@@ -516,11 +499,9 @@
             "divider_VJhene",
             "variant_picker_R3rGDr",
             "deposit_variant_picker_B9kx7W",
-            "globo_product_option_app_block_xWcdNK",
             "buy_buttons_eYQEYi",
             "group_JbmQwr",
-            "text_aEtTtq",
-            "tryonify_selling_plans_TibVn7"
+            "text_aEtTtq"
           ]
         }
       },
