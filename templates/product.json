@@ -185,7 +185,7 @@
               },
               "blocks": {}
             },
-            "deposit_variant_picker_B9kx7W": {
+            "deposit_variant_picker_kxcTNT": {
               "type": "deposit-variant-picker",
               "name": "Deposit Variant Picker",
               "settings": {
@@ -221,8 +221,8 @@
               },
               "blocks": {}
             },
-            "deposit_variant_picker_kxcTNT": {
-              "type": "deposit-variant-picker",
+            "deposit_variant_picker_clean_zLPpYN": {
+              "type": "deposit-variant-picker-clean",
               "name": "Deposit Variant Picker",
               "settings": {
                 "deposit_product": "credit-card-on-file-deposit-option",
@@ -535,8 +535,8 @@
             "group_icgrde",
             "divider_VJhene",
             "variant_picker_R3rGDr",
-            "deposit_variant_picker_B9kx7W",
             "deposit_variant_picker_kxcTNT",
+            "deposit_variant_picker_clean_zLPpYN",
             "buy_buttons_eYQEYi",
             "group_JbmQwr",
             "text_aEtTtq"
