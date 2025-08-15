@@ -1,0 +1,412 @@
+{%- comment -%}
+Deposit Variant Picker Block
+Allows selection of deposit product variants (payment options)
+Can be added in Theme Editor under Product Information > Details
+{%- endcomment -%}
+
+<script src="{{ 'deposit-ultra-simple.js' | asset_url }}" defer></script>
+
+{% liquid
+  assign product = closest.product
+  assign deposit_product = all_products['refundable-core-deposit']
+  assign first_variant = product.selected_or_first_available_variant
+  
+  comment
+  # Only show if product has "has_deposit_options" tag
+  endcomment
+  assign show_deposit_options = false
+  if product.tags contains 'has_deposit_options'
+    assign show_deposit_options = true
+  endif
+  
+  comment
+  # Calculate initial deposit for first variant (only if we should show options)
+  endcomment
+  assign initial_deposit = 0
+  if show_deposit_options
+    if first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value
+      assign initial_deposit = initial_deposit | plus: first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value
+    endif
+    if first_variant.metafields.custom.deposit_for_injectors.value  
+      assign initial_deposit = initial_deposit | plus: first_variant.metafields.custom.deposit_for_injectors.value
+    endif
+    if first_variant.metafields.custom.deposit_for_fuel_lines.value
+      assign initial_deposit = initial_deposit | plus: first_variant.metafields.custom.deposit_for_fuel_lines.value
+    endif
+  endif
+%}
+
+{% comment %} Only expose and show if product has deposit options {% endcomment %}
+{% if show_deposit_options %}
+<script>
+  window.productMetafields = window.productMetafields || {};
+  {% for variant in product.variants %}
+    window.productMetafields["{{ variant.id }}"] = {
+      "fuel_pump_deposit": {{ variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value | default: 0 }},
+      "injector_deposit": {{ variant.metafields.custom.deposit_for_injectors.value | default: 0 }},
+      "fuel_line_deposit": {{ variant.metafields.custom.deposit_for_fuel_lines.value | default: 0 }}
+    };
+  {% endfor %}
+</script>
+
+<div class="deposit-variant-picker" {% if initial_deposit == 0 %}style="display: none;"{% endif %}>
+  
+  {% if block.settings.show_title %}
+    <h3 class="deposit-title">{{ block.settings.deposit_title }}</h3>
+  {% endif %}
+  
+  {% if block.settings.show_amount %}
+    <p class="deposit-amount-display">
+      {{ block.settings.amount_label }}: 
+      <strong class="deposit-amount">${{ initial_deposit | money_without_currency }}</strong>
+    </p>
+  {% endif %}
+
+  <div class="deposit-options">
+    {% if block.settings.show_label %}
+      <label for="deposit-variant-select">{{ block.settings.dropdown_label }}</label>
+    {% endif %}
+    
+    <select id="deposit-variant-select" name="deposit_option" class="deposit-variant-dropdown" required>
+      <option value="" disabled selected>{{ block.settings.placeholder_text | default: 'Please select a deposit option...' }}</option>
+      {% for variant in deposit_product.variants %}
+        <option value="{{ variant.title | downcase | replace: ' ', '_' }}" 
+                data-variant-id="{{ variant.id }}">
+          {% case variant.title %}
+            {% when 'Credit card on file' %}
+              {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+            {% when 'Pay core deposit upfront' %}
+              {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+            {% when 'Return cores in advance' %}
+              {{ block.settings.option3_label | default: variant.title }} - No deposit required
+            {% else %}
+              {{ variant.title }}
+          {% endcase %}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  {% if block.settings.show_description %}
+    <div class="deposit-description">
+      <p id="deposit-option-description">{{ block.settings.default_description }}</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+// Handle deposit variant dropdown changes
+document.addEventListener('DOMContentLoaded', function() {
+  const dropdown = document.getElementById('deposit-variant-select');
+  const description = document.getElementById('deposit-option-description');
+  
+  if (dropdown) {
+    dropdown.addEventListener('change', function() {
+      const selectedOption = this.value;
+      
+      // Mark as valid selection made
+      this.classList.remove('invalid-selection');
+      
+      // Update description based on selection
+      if (description) {
+        switch(selectedOption) {
+          case 'credit_card_on_file':
+            description.textContent = '{{ block.settings.option1_description | default: "We will place a hold on your credit card for the deposit amount. The hold will be released when you return your old cores." }}';
+            break;
+          case 'pay_core_deposit_upfront':
+            description.textContent = '{{ block.settings.option2_description | default: "Pay the deposit now. You will receive a refund when you return your old cores." }}';
+            break;
+          case 'return_cores_in_advance':
+            description.textContent = '{{ block.settings.option3_description | default: "Return your old cores before ordering to avoid any deposit charges." }}';
+            break;
+        }
+      }
+      
+      // Trigger form update for cart submission
+      if (window.UltraSimpleDeposit) {
+        // Update the payment option in the deposit calculator
+        const event = new CustomEvent('deposit:option:change', {
+          detail: { option: selectedOption }
+        });
+        document.dispatchEvent(event);
+      }
+    });
+    
+    // Trigger initial description update
+    dropdown.dispatchEvent(new Event('change'));
+  }
+});
+</script>
+{% endif %}
+
+{% style %}
+  .deposit-variant-picker {
+    margin: {{ block.settings.margin_top }}px 0 {{ block.settings.margin_bottom }}px 0;
+    padding: {{ block.settings.padding }}px;
+    background: {{ block.settings.background_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+    {% if block.settings.show_border %}
+      border: 1px solid {{ block.settings.border_color }};
+    {% endif %}
+  }
+
+  .deposit-title {
+    color: {{ block.settings.title_color }};
+    margin-bottom: 12px;
+    font-size: {{ block.settings.title_size }}px;
+  }
+
+  .deposit-amount-display {
+    color: {{ block.settings.text_color }};
+    margin-bottom: 16px;
+  }
+
+  .deposit-amount {
+    color: {{ block.settings.amount_color }};
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  .deposit-options label {
+    display: block;
+    margin-bottom: 8px;
+    color: {{ block.settings.text_color }};
+    font-weight: 600;
+  }
+
+  .deposit-variant-dropdown {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid {{ block.settings.border_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+    background: white;
+    font-size: 16px;
+    color: {{ block.settings.text_color }};
+  }
+
+  .deposit-variant-dropdown:focus {
+    outline: 2px solid {{ block.settings.accent_color }};
+    border-color: {{ block.settings.accent_color }};
+  }
+
+  .deposit-description {
+    margin-top: 12px;
+    padding: 12px;
+    background: {{ block.settings.description_bg_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+    color: {{ block.settings.text_color }};
+    font-size: 14px;
+    line-height: 1.4;
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Deposit Variant Picker",
+  "tag": "div",
+  "class": "deposit-variant-picker-block",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Display Options"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "Show title",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "deposit_title",
+      "label": "Title",
+      "default": "Core Deposit Required"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_amount",
+      "label": "Show deposit amount",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "amount_label",
+      "label": "Amount label",
+      "default": "Deposit Amount"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_label",
+      "label": "Show dropdown label",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "dropdown_label",
+      "label": "Dropdown label",
+      "default": "Choose your deposit option:"
+    },
+    {
+      "type": "text",
+      "id": "placeholder_text",
+      "label": "Dropdown placeholder",
+      "default": "Please select a deposit option..."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show option descriptions",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "default_description",
+      "label": "Default description",
+      "default": "Select an option above to see details."
+    },
+    {
+      "type": "header",
+      "content": "Deposit Options"
+    },
+    {
+      "type": "text",
+      "id": "option1_label",
+      "label": "Credit Card Option Label",
+      "default": "Credit Card Hold"
+    },
+    {
+      "type": "textarea",
+      "id": "option1_description",
+      "label": "Credit Card Option Description",
+      "default": "We will place a hold on your credit card for the deposit amount. The hold will be released when you return your old cores."
+    },
+    {
+      "type": "text",
+      "id": "option2_label",
+      "label": "Pay Deposit Option Label",
+      "default": "Pay Deposit Now"
+    },
+    {
+      "type": "textarea",
+      "id": "option2_description",
+      "label": "Pay Deposit Option Description",
+      "default": "Pay the deposit now. You will receive a refund when you return your old cores."
+    },
+    {
+      "type": "text",
+      "id": "option3_label",
+      "label": "Return First Option Label",
+      "default": "Return Cores First"
+    },
+    {
+      "type": "textarea",
+      "id": "option3_description",
+      "label": "Return First Option Description",
+      "default": "Return your old cores before ordering to avoid any deposit charges."
+    },
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#f9f9f9"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#333333"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title Size",
+      "min": 16,
+      "max": 32,
+      "step": 2,
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "amount_color",
+      "label": "Amount Color",
+      "default": "#d73502"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent Color (focus states)",
+      "default": "#d73502"
+    },
+    {
+      "type": "color",
+      "id": "description_bg_color",
+      "label": "Description Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border",
+      "label": "Show border",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#e0e0e0"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "label": "Padding",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Margin Top",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Margin Bottom",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deposit Variant Picker"
+    }
+  ]
+}
+{% endschema %}

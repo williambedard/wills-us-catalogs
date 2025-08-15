@@ -22,10 +22,16 @@ class UltraSimpleDeposit {
 
     // Listen for payment option changes
     document.addEventListener('change', (e) => {
-      if (e.target.name === 'payment_option') {
+      if (e.target.name === 'payment_option' || e.target.name === 'deposit_option') {
         this.selectedPaymentOption = e.target.value;
         this.updateFormData();
       }
+    });
+
+    // Listen for deposit option dropdown changes
+    document.addEventListener('deposit:option:change', (e) => {
+      this.selectedPaymentOption = e.detail.option;
+      this.updateFormData();
     });
   }
 
