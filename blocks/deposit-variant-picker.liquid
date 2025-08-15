@@ -54,62 +54,10 @@ Can be added in Theme Editor under Product Information > Details
       assign fuel_line_deposit = fuel_line_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
     endif
     
-    comment 
-    # Extract amount using string filters
-    endcomment
-    assign fuel_pump_amount_str = fuel_pump_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"'
-    assign injector_amount_str = injector_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"'
-    assign fuel_line_amount_str = fuel_line_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"'
-    
     comment
-    # Convert to numbers
+    # Calculate final deposit amount
     endcomment
-    assign fuel_pump_deposit_v2 = fuel_pump_amount_str | times: 1 | default: 0
-    assign injector_deposit_v2 = injector_amount_str | times: 1 | default: 0
-    assign fuel_line_deposit_v2 = fuel_line_amount_str | times: 1 | default: 0
-    
-    comment
-    # APPROACH 3: Alternative property access methods
-    endcomment
-    assign fuel_pump_deposit_v3 = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps['amount'] | default: 0 | times: 1
-    assign injector_deposit_v3 = first_variant.metafields.custom.deposit_for_injectors['amount'] | default: 0 | times: 1
-    assign fuel_line_deposit_v3 = first_variant.metafields.custom.deposit_for_fuel_lines['amount'] | default: 0 | times: 1
-    
-    comment
-    # APPROACH 4: Money filters
-    endcomment
-    assign fuel_pump_deposit_v4 = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | money_without_currency | remove: '.' | divided_by: 100.0 | default: 0
-    assign injector_deposit_v4 = first_variant.metafields.custom.deposit_for_injectors | money_without_currency | remove: '.' | divided_by: 100.0 | default: 0
-    assign fuel_line_deposit_v4 = first_variant.metafields.custom.deposit_for_fuel_lines | money_without_currency | remove: '.' | divided_by: 100.0 | default: 0
-    
-    comment
-    # Calculate totals for each approach
-    endcomment
-    assign initial_deposit_v1 = fuel_pump_deposit_v1 | plus: injector_deposit_v1 | plus: fuel_line_deposit_v1
-    assign initial_deposit_v2 = fuel_pump_deposit_v2 | plus: injector_deposit_v2 | plus: fuel_line_deposit_v2
-    assign initial_deposit_v3 = fuel_pump_deposit_v3 | plus: injector_deposit_v3 | plus: fuel_line_deposit_v3
-    assign initial_deposit_v4 = fuel_pump_deposit_v4 | plus: injector_deposit_v4 | plus: fuel_line_deposit_v4
-    
-    comment
-    # Use the first working approach (fallback logic)
-    endcomment
-    if initial_deposit_v1 > 0
-      assign initial_deposit = initial_deposit_v1
-      assign working_approach = "v1_direct_amount"
-    elsif initial_deposit_v2 > 0
-      assign initial_deposit = initial_deposit_v2
-      assign working_approach = "v2_string_manipulation"
-    elsif initial_deposit_v3 > 0
-      assign initial_deposit = initial_deposit_v3
-      assign working_approach = "v3_bracket_notation"
-    elsif initial_deposit_v4 > 0
-      assign initial_deposit = initial_deposit_v4
-      assign working_approach = "v4_money_filters"
-    else
-      assign initial_deposit = 0
-      assign working_approach = "none_working"
-    endif
-    
+    assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
   endif
 %}
 
