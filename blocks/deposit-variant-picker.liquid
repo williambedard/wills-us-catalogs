@@ -120,6 +120,41 @@ document.addEventListener('DOMContentLoaded', function() {
       // Mark as valid selection made
       this.classList.remove('invalid-selection');
       
+      // Get current main product variant ID and calculate deposit
+      const variantInput = document.querySelector('input[name="id"]');
+      let totalDeposit = 0;
+      
+      if (variantInput && variantInput.value && window.productMetafields) {
+        const variantId = variantInput.value;
+        const metafields = window.productMetafields[variantId];
+        if (metafields) {
+          totalDeposit = (parseFloat(metafields.fuel_pump_deposit) || 0) + 
+                        (parseFloat(metafields.injector_deposit) || 0) + 
+                        (parseFloat(metafields.fuel_line_deposit) || 0);
+        }
+      }
+      
+      // Update deposit amount display
+      const depositAmountEl = document.querySelector('.deposit-amount');
+      if (depositAmountEl) {
+        depositAmountEl.textContent = `$${totalDeposit.toFixed(2)}`;
+      }
+      
+      // Update dropdown option amounts with real deposit values
+      const options = this.querySelectorAll('option[data-variant-id]');
+      options.forEach(option => {
+        const optionText = option.textContent.trim();
+        if (optionText.includes('Hold $') || optionText.includes('Pay $')) {
+          // Replace the amount in the option text
+          const baseText = optionText.split(' - ')[0];
+          if (option.value === 'credit_card_on_file') {
+            option.textContent = `${baseText} - Hold $${totalDeposit.toFixed(2)}`;
+          } else if (option.value === 'pay_core_deposit') {
+            option.textContent = `${baseText} - Pay $${totalDeposit.toFixed(2)}`;
+          }
+        }
+      });
+      
       // Update description based on selection
       if (description) {
         switch(selectedOption) {
