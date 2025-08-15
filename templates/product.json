@@ -172,19 +172,6 @@
               },
               "blocks": {}
             },
-            "variant_picker_R3rGDr": {
-              "type": "variant-picker",
-              "settings": {
-                "variant_style": "buttons",
-                "show_swatches": true,
-                "alignment": "left",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
             "deposit_variant_picker_B9kx7W": {
               "type": "deposit-variant-picker",
               "name": "Deposit Variant Picker",
@@ -217,6 +204,19 @@
                 "padding": 20,
                 "margin_top": 15,
                 "margin_bottom": 15
+              },
+              "blocks": {}
+            },
+            "variant_picker_R3rGDr": {
+              "type": "variant-picker",
+              "settings": {
+                "variant_style": "buttons",
+                "show_swatches": true,
+                "alignment": "left",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
               },
               "blocks": {}
             },
@@ -514,8 +514,8 @@
           "block_order": [
             "group_icgrde",
             "divider_VJhene",
-            "variant_picker_R3rGDr",
             "deposit_variant_picker_B9kx7W",
+            "variant_picker_R3rGDr",
             "globo_product_option_app_block_xWcdNK",
             "buy_buttons_eYQEYi",
             "group_JbmQwr",
