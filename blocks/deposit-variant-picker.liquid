@@ -42,6 +42,11 @@ Can be added in Theme Editor under Product Information > Details
 {% comment %} Only expose and show if product has deposit options {% endcomment %}
 {% if show_deposit_options %}
 <!-- DEBUG: Product has has_deposit_options tag -->
+<!-- DEBUG: First variant ID: {{ first_variant.id }} -->
+<!-- DEBUG: Fuel pump deposit: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps }} -->
+<!-- DEBUG: Injector deposit: {{ first_variant.metafields.custom.deposit_for_injectors }} -->  
+<!-- DEBUG: Fuel line deposit: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
+<!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
