@@ -160,6 +160,31 @@
                 "price_tVjtKg"
               ]
             },
+            "divider_VJhene": {
+              "type": "_divider",
+              "name": "t:names.divider",
+              "settings": {
+                "thickness": 1,
+                "corner_radius": "square",
+                "width_percent": 100,
+                "padding-block-start": 0,
+                "padding-block-end": 0
+              },
+              "blocks": {}
+            },
+            "variant_picker_R3rGDr": {
+              "type": "variant-picker",
+              "settings": {
+                "variant_style": "buttons",
+                "show_swatches": true,
+                "alignment": "left",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
             "deposit_variant_picker_B9kx7W": {
               "type": "deposit-variant-picker",
               "name": "Deposit Variant Picker",
@@ -192,31 +217,6 @@
                 "padding": 20,
                 "margin_top": 15,
                 "margin_bottom": 15
-              },
-              "blocks": {}
-            },
-            "divider_VJhene": {
-              "type": "_divider",
-              "name": "t:names.divider",
-              "settings": {
-                "thickness": 1,
-                "corner_radius": "square",
-                "width_percent": 100,
-                "padding-block-start": 0,
-                "padding-block-end": 0
-              },
-              "blocks": {}
-            },
-            "variant_picker_R3rGDr": {
-              "type": "variant-picker",
-              "settings": {
-                "variant_style": "buttons",
-                "show_swatches": true,
-                "alignment": "left",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
               },
               "blocks": {}
             },
@@ -513,9 +513,9 @@
           },
           "block_order": [
             "group_icgrde",
-            "deposit_variant_picker_B9kx7W",
             "divider_VJhene",
             "variant_picker_R3rGDr",
+            "deposit_variant_picker_B9kx7W",
             "globo_product_option_app_block_xWcdNK",
             "buy_buttons_eYQEYi",
             "group_JbmQwr",
