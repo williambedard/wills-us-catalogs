@@ -1,0 +1,39 @@
+{% comment %}
+Utility snippet to reliably extract numeric value from MONEY metafields
+Usage: {% assign amount = money_field | money_metafield_value %}
+
+This snippet tries multiple approaches and returns the first working result:
+1. Direct .amount property access
+2. String manipulation from JSON
+3. Split technique
+4. Money filter parsing
+
+Parameters:
+- money_field: The MONEY metafield to extract value from
+{% endcomment %}
+
+{% comment %} Try direct .amount access first {% endcomment %}
+{% assign direct_amount = money_field.amount | times: 1 %}
+
+{% if direct_amount > 0 %}
+  {{ direct_amount }}
+{% else %}
+  {% comment %} Fallback to string manipulation {% endcomment %}
+  {% assign json_string = money_field | json | default: '{"amount":"0","currency_code":"USD"}' %}
+  {% assign extracted_amount = json_string | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
+  {% assign parsed_amount = extracted_amount | times: 1 %}
+  
+  {% if parsed_amount > 0 %}
+    {{ parsed_amount }}
+  {% else %}
+    {% comment %} Last resort: split technique {% endcomment %}
+    {% assign split_parts = json_string | split: '"amount":"' %}
+    {% if split_parts.size > 1 %}
+      {% assign amount_only = split_parts[1] | split: '"' | first %}
+      {% assign split_amount = amount_only | times: 1 %}
+      {{ split_amount }}
+    {% else %}
+      0
+    {% endif %}
+  {% endif %}
+{% endif %}

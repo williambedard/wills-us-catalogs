@@ -1,0 +1,192 @@
+{% comment %}
+MONEY Metafield Testing Section
+Add this to your theme temporarily to test MONEY metafield access patterns.
+Use in Theme Editor: Add Section > Custom > MONEY Metafield Test
+{% endcomment %}
+
+<div style="background: #f0f8ff; padding: 20px; margin: 20px; border: 2px solid #007acc;">
+  <h2 style="color: #007acc; margin-top: 0;">🔍 MONEY Metafield Testing Lab</h2>
+  
+  {% assign test_product = collections.all.products | where: 'tags', 'has_deposit_options' | first %}
+  {% if test_product == blank %}
+    {% assign test_product = collections.all.products.first %}
+  {% endif %}
+  
+  {% if test_product %}
+    <h3>Testing Product: {{ test_product.title }}</h3>
+    
+    {% for variant in test_product.variants limit: 2 %}
+      <div style="background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745;">
+        <h4>Variant: {{ variant.title }} (ID: {{ variant.id }})</h4>
+        
+        <!-- Test each known MONEY metafield -->
+        {% assign money_fields = 'deposit_for_injectors,deposit_for_high_pressure_fuel_pumps,deposit_for_fuel_lines' | split: ',' %}
+        
+        {% for field in money_fields %}
+          {% assign current_metafield = variant.metafields.custom[field] %}
+          
+          {% if current_metafield %}
+            <div style="background: #f8f9fa; padding: 10px; margin: 10px 0; border: 1px solid #dee2e6;">
+              <h5>{{ field | replace: '_', ' ' | capitalize }}</h5>
+              
+              <!-- Raw value -->
+              <p><strong>Raw:</strong> <code>{{ current_metafield }}</code></p>
+              
+              <!-- Test all access methods -->
+              <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                <tr style="background: #e9ecef;">
+                  <th style="padding: 8px; border: 1px solid #dee2e6;">Method</th>
+                  <th style="padding: 8px; border: 1px solid #dee2e6;">Result</th>
+                  <th style="padding: 8px; border: 1px solid #dee2e6;">Status</th>
+                </tr>
+                
+                {% comment %} Method 1: Direct .amount {% endcomment %}
+                {% assign method1 = current_metafield.amount | times: 1 %}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><code>.amount | times: 1</code></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>{{ method1 }}</strong></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if method1 > 0 %}✅ Working{% else %}❌ Failed{% endif %}
+                  </td>
+                </tr>
+                
+                {% comment %} Method 2: Bracket notation {% endcomment %}
+                {% assign method2 = current_metafield['amount'] | times: 1 %}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><code>['amount'] | times: 1</code></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>{{ method2 }}</strong></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if method2 > 0 %}✅ Working{% else %}❌ Failed{% endif %}
+                  </td>
+                </tr>
+                
+                {% comment %} Method 3: String manipulation {% endcomment %}
+                {% assign raw_json = current_metafield | json %}
+                {% assign extracted = raw_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
+                {% assign method3 = extracted | times: 1 %}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><code>String extraction</code></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>{{ method3 }}</strong> (from "{{ extracted }}")</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if method3 > 0 %}✅ Working{% else %}❌ Failed{% endif %}
+                  </td>
+                </tr>
+                
+                {% comment %} Method 4: Money filter {% endcomment %}
+                {% assign method4_raw = current_metafield | money_without_currency %}
+                {% assign method4 = method4_raw | remove: '.' | divided_by: 100.0 %}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><code>money_without_currency</code></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>{{ method4 }}</strong> (from {{ method4_raw }})</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if method4 > 0 %}✅ Working{% else %}❌ Failed{% endif %}
+                  </td>
+                </tr>
+                
+                {% comment %} Method 5: Split technique {% endcomment %}
+                {% assign split_parts = raw_json | split: '"amount":"' %}
+                {% if split_parts.size > 1 %}
+                  {% assign amount_part = split_parts[1] | split: '"' | first %}
+                  {% assign method5 = amount_part | times: 1 %}
+                {% else %}
+                  {% assign method5 = 0 %}
+                  {% assign amount_part = 'failed' %}
+                {% endif %}
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><code>Split technique</code></td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>{{ method5 }}</strong> (from "{{ amount_part }}")</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if method5 > 0 %}✅ Working{% else %}❌ Failed{% endif %}
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Summary -->
+              <div style="background: #d4edda; padding: 10px; margin: 10px 0;">
+                <strong>Best Method for {{ field }}:</strong>
+                {% if method1 > 0 %}
+                  Direct .amount access ✅
+                {% elsif method2 > 0 %}
+                  Bracket notation ['amount'] ✅
+                {% elsif method3 > 0 %}
+                  String manipulation ✅
+                {% elsif method4 > 0 %}
+                  Money filter ✅
+                {% elsif method5 > 0 %}
+                  Split technique ✅
+                {% else %}
+                  ❌ No method working - investigate metafield structure
+                {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <p style="color: #6c757d;"><em>No {{ field }} metafield found</em></p>
+          {% endif %}
+        {% endfor %}
+        
+        <!-- JavaScript test data -->
+        <div style="background: #fff3cd; padding: 10px; margin: 10px 0;">
+          <h5>JavaScript Test Data</h5>
+          <script>
+            console.log('Variant {{ variant.id }} metafields:', {
+              {% for field in money_fields %}
+                {% assign current_metafield = variant.metafields.custom[field] %}
+                {% if current_metafield %}
+                  '{{ field }}': {{ current_metafield | json }},
+                {% endif %}
+              {% endfor %}
+            });
+          </script>
+          <p><em>Check browser console for JavaScript output</em></p>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color: #dc3545;">⚠️ No products found for testing. Create a product with MONEY metafields first.</p>
+  {% endif %}
+  
+  <!-- Instructions -->
+  <div style="background: #d1ecf1; padding: 15px; margin: 15px 0; border-left: 4px solid #17a2b8;">
+    <h4>🎯 How to Use This Test</h4>
+    <ol>
+      <li>Add this section to a page or product template temporarily</li>
+      <li>Ensure you have products with MONEY metafields set up</li>
+      <li>View the page and check which methods show ✅ Working</li>
+      <li>Open browser console to see JavaScript test data</li>
+      <li>Use the working method in your production code</li>
+      <li>Remove this test section when done</li>
+    </ol>
+    
+    <h4>📊 Expected Results</h4>
+    <ul>
+      <li><strong>If .amount works:</strong> Use direct property access</li>
+      <li><strong>If only string manipulation works:</strong> Shopify may be returning MONEY as JSON string</li>
+      <li><strong>If money filters work:</strong> Use Shopify's built-in money handling</li>
+      <li><strong>If nothing works:</strong> Check metafield setup and data type</li>
+    </ul>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "MONEY Metafield Test",
+  "class": "money-metafield-test",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Testing Configuration"
+    },
+    {
+      "type": "product",
+      "id": "test_product",
+      "label": "Test Product",
+      "info": "Select a product with MONEY metafields to test (optional)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "MONEY Metafield Test"
+    }
+  ]
+}
+{% endschema %}
