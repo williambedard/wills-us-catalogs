@@ -28,24 +28,31 @@ Can be added in Theme Editor under Product Information > Details
   endif
   
   comment
-  # DEBUG STRATEGY: Multiple approaches to extract MONEY metafield values
+  # MONEY metafield calculation using JSON string parsing method
   endcomment
   assign initial_deposit = 0
   if show_deposit_options and first_variant
     
     comment
-    # APPROACH 1: Direct .amount access (current approach)
+    # Extract numeric values using reliable JSON string manipulation
     endcomment
-    assign fuel_pump_deposit_v1 = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.amount | default: 0 | times: 1
-    assign injector_deposit_v1 = first_variant.metafields.custom.deposit_for_injectors.amount | default: 0 | times: 1
-    assign fuel_line_deposit_v1 = first_variant.metafields.custom.deposit_for_fuel_lines.amount | default: 0 | times: 1
+    assign fuel_pump_deposit = 0
+    if first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps
+      assign fuel_pump_json = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json
+      assign fuel_pump_deposit = fuel_pump_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+    endif
     
-    comment
-    # APPROACH 2: String manipulation to extract amount from JSON
-    endcomment
-    assign fuel_pump_raw = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | default: '{"amount":"0","currency_code":"USD"}'
-    assign injector_raw = first_variant.metafields.custom.deposit_for_injectors | default: '{"amount":"0","currency_code":"USD"}'
-    assign fuel_line_raw = first_variant.metafields.custom.deposit_for_fuel_lines | default: '{"amount":"0","currency_code":"USD"}'
+    assign injector_deposit = 0
+    if first_variant.metafields.custom.deposit_for_injectors
+      assign injector_json = first_variant.metafields.custom.deposit_for_injectors | json
+      assign injector_deposit = injector_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+    endif
+    
+    assign fuel_line_deposit = 0
+    if first_variant.metafields.custom.deposit_for_fuel_lines
+      assign fuel_line_json = first_variant.metafields.custom.deposit_for_fuel_lines | json
+      assign fuel_line_deposit = fuel_line_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+    endif
     
     comment 
     # Extract amount using string filters
