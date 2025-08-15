@@ -40,19 +40,31 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     assign fuel_pump_deposit = 0
     if first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps
       assign fuel_pump_json = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json
-      assign fuel_pump_deposit = fuel_pump_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+      assign fuel_pump_parts = fuel_pump_json | split: '"amount":"'
+      if fuel_pump_parts.size > 1
+        assign fuel_pump_amount_part = fuel_pump_parts[1] | split: '"'
+        assign fuel_pump_deposit = fuel_pump_amount_part[0] | times: 1
+      endif
     endif
     
     assign injector_deposit = 0
     if first_variant.metafields.custom.deposit_for_injectors
       assign injector_json = first_variant.metafields.custom.deposit_for_injectors | json
-      assign injector_deposit = injector_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+      assign injector_parts = injector_json | split: '"amount":"'
+      if injector_parts.size > 1
+        assign injector_amount_part = injector_parts[1] | split: '"'
+        assign injector_deposit = injector_amount_part[0] | times: 1
+      endif
     endif
     
     assign fuel_line_deposit = 0
     if first_variant.metafields.custom.deposit_for_fuel_lines
       assign fuel_line_json = first_variant.metafields.custom.deposit_for_fuel_lines | json
-      assign fuel_line_deposit = fuel_line_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
+      assign fuel_line_parts = fuel_line_json | split: '"amount":"'
+      if fuel_line_parts.size > 1
+        assign fuel_line_amount_part = fuel_line_parts[1] | split: '"'
+        assign fuel_line_deposit = fuel_line_amount_part[0] | times: 1
+      endif
     endif
     
     assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
