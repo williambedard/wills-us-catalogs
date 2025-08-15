@@ -222,6 +222,7 @@
             },
             "globo_product_option_app_block_xWcdNK": {
               "type": "shopify://apps/globo-product-option/blocks/app-block/fdc9fad5-1a0f-4bd4-9c8a-1af6a6eef6b8",
+              "disabled": true,
               "settings": {}
             },
             "buy_buttons_eYQEYi": {
