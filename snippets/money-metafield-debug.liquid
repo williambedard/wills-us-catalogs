@@ -1,0 +1,104 @@
+{% comment %}
+MONEY Metafield Debug Snippet
+Usage: {% render 'money-metafield-debug', variant: variant, metafield: variant.metafields.custom.your_money_field %}
+{% endcomment %}
+
+{% assign debug_variant = variant | default: product.selected_or_first_available_variant %}
+{% assign debug_metafield = metafield | default: debug_variant.metafields.custom.deposit_for_injectors %}
+
+<div style="background: #f5f5f5; padding: 15px; margin: 10px 0; border-left: 4px solid #007acc; font-family: monospace; font-size: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: #007acc;">🔍 MONEY Metafield Debug Analysis</h4>
+  
+  <!-- Basic Info -->
+  <p><strong>Variant ID:</strong> {{ debug_variant.id | default: 'N/A' }}</p>
+  <p><strong>Metafield Namespace.Key:</strong> {{ metafield.namespace }}.{{ metafield.key | default: 'custom.deposit_for_injectors' }}</p>
+  
+  <!-- Raw Output Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">📊 Raw Metafield Output:</h5>
+    <p>Direct: <code>{{ debug_metafield }}</code></p>
+    <p>Type: <code>{{ debug_metafield.type }}</code></p>
+    <p>Value: <code>{{ debug_metafield.value }}</code></p>
+  </div>
+  
+  <!-- Property Access Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">🎯 Property Access Tests:</h5>
+    <p>📌 .amount: <code>{{ debug_metafield.amount }}</code> ({{ debug_metafield.amount | default: 'NIL' }})</p>
+    <p>📌 ['amount']: <code>{{ debug_metafield['amount'] }}</code> ({{ debug_metafield['amount'] | default: 'NIL' }})</p>
+    <p>📌 .currency_code: <code>{{ debug_metafield.currency_code }}</code></p>
+    <p>📌 ['currency_code']: <code>{{ debug_metafield['currency_code'] }}</code></p>
+  </div>
+  
+  <!-- Math Operation Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">🧮 Math Operation Tests:</h5>
+    {% assign test1 = debug_metafield.amount | times: 1 %}
+    {% assign test2 = debug_metafield.amount | plus: 0 %}
+    {% assign test3 = debug_metafield.amount | default: 0 | times: 1 %}
+    {% assign test4 = debug_metafield['amount'] | times: 1 %}
+    
+    <p>📌 .amount | times: 1 = <code>{{ test1 }}</code></p>
+    <p>📌 .amount | plus: 0 = <code>{{ test2 }}</code></p>
+    <p>📌 .amount | default: 0 | times: 1 = <code>{{ test3 }}</code></p>
+    <p>📌 ['amount'] | times: 1 = <code>{{ test4 }}</code></p>
+  </div>
+  
+  <!-- Filter Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">🔧 Filter Tests:</h5>
+    <p>📌 | money: <code>{{ debug_metafield | money }}</code></p>
+    <p>📌 | money_without_currency: <code>{{ debug_metafield | money_without_currency }}</code></p>
+    <p>📌 | json: <code>{{ debug_metafield | json }}</code></p>
+  </div>
+  
+  <!-- String Manipulation Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">✂️ String Manipulation Tests:</h5>
+    {% assign raw_string = debug_metafield | json | default: '{"amount":"0","currency_code":"USD"}' %}
+    {% assign amount_extracted = raw_string | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
+    {% assign amount_as_number = amount_extracted | times: 1 %}
+    
+    <p>📌 Raw JSON: <code>{{ raw_string }}</code></p>
+    <p>📌 Extracted amount: <code>'{{ amount_extracted }}'</code></p>
+    <p>📌 As number: <code>{{ amount_as_number }}</code></p>
+  </div>
+  
+  <!-- Condition Tests -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">❓ Condition Tests:</h5>
+    <p>📌 if debug_metafield.amount: {% if debug_metafield.amount %}TRUE{% else %}FALSE{% endif %}</p>
+    <p>📌 if debug_metafield.amount > 0: {% if debug_metafield.amount > 0 %}TRUE{% else %}FALSE{% endif %}</p>
+    <p>📌 unless debug_metafield.amount == blank: {% unless debug_metafield.amount == blank %}TRUE{% else %}FALSE{% endunless %}</p>
+  </div>
+  
+  <!-- Alternative Access Methods -->
+  <div style="background: white; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0;">🔀 Alternative Access Methods:</h5>
+    {% comment %} Split the JSON and extract amount {% endcomment %}
+    {% assign split_test = debug_metafield | json | split: '"amount":"' %}
+    {% if split_test.size > 1 %}
+      {% assign amount_part = split_test[1] | split: '"' | first %}
+      <p>📌 Split method result: <code>{{ amount_part }} = {{ amount_part | times: 1 }}</code></p>
+    {% else %}
+      <p>📌 Split method: <code>FAILED</code></p>
+    {% endif %}
+  </div>
+  
+  <!-- Summary -->
+  <div style="background: #e8f4fd; padding: 10px; margin: 10px 0;">
+    <h5 style="margin: 0 0 5px 0; color: #007acc;">📋 Quick Summary:</h5>
+    {% if test3 > 0 %}
+      <p>✅ <strong>WORKING:</strong> .amount | default: 0 | times: 1 = {{ test3 }}</p>
+    {% elsif amount_as_number > 0 %}
+      <p>✅ <strong>WORKING:</strong> String manipulation = {{ amount_as_number }}</p>
+    {% elsif amount_part and amount_part != blank %}
+      {% assign split_number = amount_part | times: 1 %}
+      {% if split_number > 0 %}
+        <p>✅ <strong>WORKING:</strong> Split method = {{ split_number }}</p>
+      {% endif %}
+    {% else %}
+      <p>❌ <strong>ISSUE:</strong> No method successfully extracted numeric value</p>
+    {% endif %}
+  </div>
+</div>

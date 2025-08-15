@@ -143,6 +143,11 @@ Can be added in Theme Editor under Product Information > Details
 <!-- FINAL RESULTS: -->
 <!-- Working approach: {{ working_approach }} -->
 <!-- Final initial_deposit: {{ initial_deposit }} -->
+
+<!-- DETAILED METAFIELD ANALYSIS -->
+{% if first_variant.metafields.custom.deposit_for_injectors %}
+  {% render 'money-metafield-debug', variant: first_variant, metafield: first_variant.metafields.custom.deposit_for_injectors %}
+{% endif %}
 <script>
   window.productMetafields = window.productMetafields || {};
   window.debugMetafields = window.debugMetafields || {};
