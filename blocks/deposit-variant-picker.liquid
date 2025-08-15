@@ -7,7 +7,7 @@ Can be added in Theme Editor under Product Information > Details
 <script src="{{ 'deposit-ultra-simple.js' | asset_url }}" defer></script>
 
 {% liquid
-  assign product = closest.product
+  assign product = product | default: closest.product
   if request.visual_preview_mode and product == blank
     assign product = collections.all.products.first
   endif
@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {% else %}
 <!-- DEBUG: Product does NOT have has_deposit_options tag -->
+<!-- DEBUG: Product ID: {{ product.id }}, Tags: {{ product.tags | join: ', ' }} -->
 {% endif %}
 
 {% style %}
