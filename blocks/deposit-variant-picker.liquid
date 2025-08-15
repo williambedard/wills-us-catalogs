@@ -37,35 +37,9 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     # Extract numeric values from MONEY metafields using JSON string manipulation
     # This method works when .amount property access fails
     endcomment
-    assign fuel_pump_deposit = 0
-    if first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps
-      assign fuel_pump_json = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json
-      assign fuel_pump_parts = fuel_pump_json | split: '"amount":"'
-      if fuel_pump_parts.size > 1
-        assign fuel_pump_amount_part = fuel_pump_parts[1] | split: '"'
-        assign fuel_pump_deposit = fuel_pump_amount_part[0] | times: 1
-      endif
-    endif
-    
-    assign injector_deposit = 0
-    if first_variant.metafields.custom.deposit_for_injectors
-      assign injector_json = first_variant.metafields.custom.deposit_for_injectors | json
-      assign injector_parts = injector_json | split: '"amount":"'
-      if injector_parts.size > 1
-        assign injector_amount_part = injector_parts[1] | split: '"'
-        assign injector_deposit = injector_amount_part[0] | times: 1
-      endif
-    endif
-    
-    assign fuel_line_deposit = 0
-    if first_variant.metafields.custom.deposit_for_fuel_lines
-      assign fuel_line_json = first_variant.metafields.custom.deposit_for_fuel_lines | json
-      assign fuel_line_parts = fuel_line_json | split: '"amount":"'
-      if fuel_line_parts.size > 1
-        assign fuel_line_amount_part = fuel_line_parts[1] | split: '"'
-        assign fuel_line_deposit = fuel_line_amount_part[0] | times: 1
-      endif
-    endif
+    assign fuel_pump_deposit = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount | default: 0
+    assign injector_deposit = first_variant.metafields.custom.deposit_for_injectors.value.amount | default: 0
+    assign fuel_line_deposit = first_variant.metafields.custom.deposit_for_fuel_lines.value.amount | default: 0
     
     assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
   endif
@@ -88,32 +62,9 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     {% assign inj_val = 0 %}
     {% assign fl_val = 0 %}
     
-    {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
-      {% assign fp_json = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json %}
-      {% assign fp_parts = fp_json | split: '"amount":"' %}
-      {% if fp_parts.size > 1 %}
-        {% assign fp_amount_part = fp_parts[1] | split: '"' %}
-        {% assign fp_val = fp_amount_part[0] | times: 1 %}
-      {% endif %}
-    {% endif %}
-    
-    {% if variant.metafields.custom.deposit_for_injectors %}
-      {% assign inj_json = variant.metafields.custom.deposit_for_injectors | json %}
-      {% assign inj_parts = inj_json | split: '"amount":"' %}
-      {% if inj_parts.size > 1 %}
-        {% assign inj_amount_part = inj_parts[1] | split: '"' %}
-        {% assign inj_val = inj_amount_part[0] | times: 1 %}
-      {% endif %}
-    {% endif %}
-    
-    {% if variant.metafields.custom.deposit_for_fuel_lines %}
-      {% assign fl_json = variant.metafields.custom.deposit_for_fuel_lines | json %}
-      {% assign fl_parts = fl_json | split: '"amount":"' %}
-      {% if fl_parts.size > 1 %}
-        {% assign fl_amount_part = fl_parts[1] | split: '"' %}
-        {% assign fl_val = fl_amount_part[0] | times: 1 %}
-      {% endif %}
-    {% endif %}
+    {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount | default: 0 %}
+    {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value.amount | default: 0 %}
+    {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount | default: 0 %}
     
     window.productMetafields["{{ variant.id }}"] = {
       "fuel_pump_deposit": {{ fp_val }},
