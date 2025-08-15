@@ -90,17 +90,29 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     
     {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
       {% assign fp_json = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json %}
-      {% assign fp_val = fp_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
+      {% assign fp_parts = fp_json | split: '"amount":"' %}
+      {% if fp_parts.size > 1 %}
+        {% assign fp_amount_part = fp_parts[1] | split: '"' %}
+        {% assign fp_val = fp_amount_part[0] | times: 1 %}
+      {% endif %}
     {% endif %}
     
     {% if variant.metafields.custom.deposit_for_injectors %}
       {% assign inj_json = variant.metafields.custom.deposit_for_injectors | json %}
-      {% assign inj_val = inj_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
+      {% assign inj_parts = inj_json | split: '"amount":"' %}
+      {% if inj_parts.size > 1 %}
+        {% assign inj_amount_part = inj_parts[1] | split: '"' %}
+        {% assign inj_val = inj_amount_part[0] | times: 1 %}
+      {% endif %}
     {% endif %}
     
     {% if variant.metafields.custom.deposit_for_fuel_lines %}
       {% assign fl_json = variant.metafields.custom.deposit_for_fuel_lines | json %}
-      {% assign fl_val = fl_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
+      {% assign fl_parts = fl_json | split: '"amount":"' %}
+      {% if fl_parts.size > 1 %}
+        {% assign fl_amount_part = fl_parts[1] | split: '"' %}
+        {% assign fl_val = fl_amount_part[0] | times: 1 %}
+      {% endif %}
     {% endif %}
     
     window.productMetafields["{{ variant.id }}"] = {
