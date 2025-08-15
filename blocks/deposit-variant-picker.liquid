@@ -45,6 +45,7 @@ Can be added in Theme Editor under Product Information > Details
 
 {% comment %} Only expose and show if product has deposit options {% endcomment %}
 {% if show_deposit_options %}
+<!-- DEBUG: Product has has_deposit_options tag -->
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
@@ -149,6 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+{% else %}
+<!-- DEBUG: Product does NOT have has_deposit_options tag -->
 {% endif %}
 
 {% style %}
