@@ -1,11 +1,11 @@
 {%- comment -%}
-Deposit Variant Picker Block
+Deposit Variant Picker Block - Clean Production Version
 Allows selection of deposit product variants (payment options)
 Can be added in Theme Editor under Product Information > Details
+Uses JSON string parsing for reliable MONEY metafield extraction
 {%- endcomment -%}
 
 <script src="{{ 'deposit-ultra-simple.js' | asset_url }}" defer></script>
-<script src="{{ 'money-metafield-diagnostics.js' | asset_url }}" defer></script>
 
 {% liquid
   assign product = product | default: closest.product
@@ -28,13 +28,14 @@ Can be added in Theme Editor under Product Information > Details
   endif
   
   comment
-  # MONEY metafield calculation using JSON string parsing method
+  # Calculate deposit using reliable JSON string parsing method
   endcomment
   assign initial_deposit = 0
   if show_deposit_options and first_variant
     
     comment
-    # Extract numeric values using reliable JSON string manipulation
+    # Extract numeric values from MONEY metafields using JSON string manipulation
+    # This method works when .amount property access fails
     endcomment
     assign fuel_pump_deposit = 0
     if first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps
@@ -54,9 +55,6 @@ Can be added in Theme Editor under Product Information > Details
       assign fuel_line_deposit = fuel_line_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1
     endif
     
-    comment
-    # Calculate final deposit amount
-    endcomment
     assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
   endif
 %}
@@ -65,161 +63,40 @@ Can be added in Theme Editor under Product Information > Details
 {% if show_deposit_options %}
 <!-- DEBUG: Product has has_deposit_options tag -->
 <!-- DEBUG: First variant ID: {{ first_variant.id }} -->
-
-<!-- COMPREHENSIVE METAFIELD DEBUG OUTPUT -->
-<!-- RAW METAFIELD VALUES: -->
-<!-- Fuel pump raw: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps }} -->
-<!-- Injector raw: {{ first_variant.metafields.custom.deposit_for_injectors }} -->  
-<!-- Fuel line raw: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
-
-<!-- APPROACH 1 - Direct .amount access: -->
-<!-- Fuel pump v1: {{ fuel_pump_deposit_v1 }} -->
-<!-- Injector v1: {{ injector_deposit_v1 }} -->
-<!-- Fuel line v1: {{ fuel_line_deposit_v1 }} -->
-<!-- Total v1: {{ initial_deposit_v1 }} -->
-
-<!-- APPROACH 2 - String manipulation: -->
-<!-- Fuel pump extracted: '{{ fuel_pump_amount_str }}' = {{ fuel_pump_deposit_v2 }} -->
-<!-- Injector extracted: '{{ injector_amount_str }}' = {{ injector_deposit_v2 }} -->
-<!-- Fuel line extracted: '{{ fuel_line_amount_str }}' = {{ fuel_line_deposit_v2 }} -->
-<!-- Total v2: {{ initial_deposit_v2 }} -->
-
-<!-- APPROACH 3 - Bracket notation: -->
-<!-- Fuel pump v3: {{ fuel_pump_deposit_v3 }} -->
-<!-- Injector v3: {{ injector_deposit_v3 }} -->
-<!-- Fuel line v3: {{ fuel_line_deposit_v3 }} -->
-<!-- Total v3: {{ initial_deposit_v3 }} -->
-
-<!-- APPROACH 4 - Money filters: -->
-<!-- Fuel pump v4: {{ fuel_pump_deposit_v4 }} -->
-<!-- Injector v4: {{ injector_deposit_v4 }} -->
-<!-- Fuel line v4: {{ fuel_line_deposit_v4 }} -->
-<!-- Total v4: {{ initial_deposit_v4 }} -->
-
-<!-- FINAL RESULTS: -->
-<!-- Working approach: {{ working_approach }} -->
-<!-- Final initial_deposit: {{ initial_deposit }} -->
-
-<!-- DETAILED METAFIELD ANALYSIS -->
-{% if first_variant.metafields.custom.deposit_for_injectors %}
-  {% render 'money-metafield-debug', variant: first_variant, metafield: first_variant.metafields.custom.deposit_for_injectors %}
-{% endif %}
+<!-- DEBUG: Fuel pump deposit: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps }} -->
+<!-- DEBUG: Injector deposit: {{ first_variant.metafields.custom.deposit_for_injectors }} -->  
+<!-- DEBUG: Fuel line deposit: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
+<!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
+<!-- DEBUG: Individual amounts - Fuel pump: {{ fuel_pump_deposit }}, Injector: {{ injector_deposit }}, Fuel line: {{ fuel_line_deposit }} -->
 <script>
   window.productMetafields = window.productMetafields || {};
-  window.debugMetafields = window.debugMetafields || {};
-  
   {% for variant in product.variants %}
-    {% comment %} Apply same debugging approaches for JavaScript data {% endcomment %}
-    {% assign v_fuel_pump_v1 = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.amount | default: 0 | times: 1 %}
-    {% assign v_injector_v1 = variant.metafields.custom.deposit_for_injectors.amount | default: 0 | times: 1 %}
-    {% assign v_fuel_line_v1 = variant.metafields.custom.deposit_for_fuel_lines.amount | default: 0 | times: 1 %}
+    {% comment %}Extract values using same JSON parsing method{% endcomment %}
+    {% assign fp_val = 0 %}
+    {% assign inj_val = 0 %}
+    {% assign fl_val = 0 %}
     
-    {% assign v_fuel_pump_raw = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | default: '{"amount":"0","currency_code":"USD"}' %}
-    {% assign v_injector_raw = variant.metafields.custom.deposit_for_injectors | default: '{"amount":"0","currency_code":"USD"}' %}
-    {% assign v_fuel_line_raw = variant.metafields.custom.deposit_for_fuel_lines | default: '{"amount":"0","currency_code":"USD"}' %}
-    
-    {% assign v_fuel_pump_str = v_fuel_pump_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
-    {% assign v_injector_str = v_injector_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
-    {% assign v_fuel_line_str = v_fuel_line_raw | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | remove: '"' %}
-    
-    {% assign v_fuel_pump_v2 = v_fuel_pump_str | times: 1 | default: 0 %}
-    {% assign v_injector_v2 = v_injector_str | times: 1 | default: 0 %}
-    {% assign v_fuel_line_v2 = v_fuel_line_str | times: 1 | default: 0 %}
-    
-    {% comment %} Use working values - fallback logic {% endcomment %}
-    {% if v_fuel_pump_v1 > 0 or v_injector_v1 > 0 or v_fuel_line_v1 > 0 %}
-      window.productMetafields["{{ variant.id }}"] = {
-        "fuel_pump_deposit": {{ v_fuel_pump_v1 }},
-        "injector_deposit": {{ v_injector_v1 }},
-        "fuel_line_deposit": {{ v_fuel_line_v1 }},
-        "method": "v1_direct_amount"
-      };
-    {% elsif v_fuel_pump_v2 > 0 or v_injector_v2 > 0 or v_fuel_line_v2 > 0 %}
-      window.productMetafields["{{ variant.id }}"] = {
-        "fuel_pump_deposit": {{ v_fuel_pump_v2 }},
-        "injector_deposit": {{ v_injector_v2 }},
-        "fuel_line_deposit": {{ v_fuel_line_v2 }},
-        "method": "v2_string_manipulation"
-      };
-    {% else %}
-      window.productMetafields["{{ variant.id }}"] = {
-        "fuel_pump_deposit": 0,
-        "injector_deposit": 0,
-        "fuel_line_deposit": 0,
-        "method": "fallback_zeros"
-      };
+    {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
+      {% assign fp_json = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps | json %}
+      {% assign fp_val = fp_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
     {% endif %}
     
-    {% comment %} Store debug data for analysis {% endcomment %}
-    window.debugMetafields["{{ variant.id }}"] = {
-      "raw_data": {
-        "fuel_pump": {{ v_fuel_pump_raw | json }},
-        "injector": {{ v_injector_raw | json }},
-        "fuel_line": {{ v_fuel_line_raw | json }}
-      },
-      "extracted_strings": {
-        "fuel_pump": "{{ v_fuel_pump_str }}",
-        "injector": "{{ v_injector_str }}",
-        "fuel_line": "{{ v_fuel_line_str }}"
-      },
-      "v1_amounts": {
-        "fuel_pump": {{ v_fuel_pump_v1 }},
-        "injector": {{ v_injector_v1 }},
-        "fuel_line": {{ v_fuel_line_v1 }}
-      },
-      "v2_amounts": {
-        "fuel_pump": {{ v_fuel_pump_v2 }},
-        "injector": {{ v_injector_v2 }},
-        "fuel_line": {{ v_fuel_line_v2 }}
-      }
+    {% if variant.metafields.custom.deposit_for_injectors %}
+      {% assign inj_json = variant.metafields.custom.deposit_for_injectors | json %}
+      {% assign inj_val = inj_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
+    {% endif %}
+    
+    {% if variant.metafields.custom.deposit_for_fuel_lines %}
+      {% assign fl_json = variant.metafields.custom.deposit_for_fuel_lines | json %}
+      {% assign fl_val = fl_json | remove: '{"amount":"' | remove: '","currency_code":"USD"}' | times: 1 %}
+    {% endif %}
+    
+    window.productMetafields["{{ variant.id }}"] = {
+      "fuel_pump_deposit": {{ fp_val }},
+      "injector_deposit": {{ inj_val }},
+      "fuel_line_deposit": {{ fl_val }}
     };
   {% endfor %}
-  
-  // CONSOLE DEBUG HELPERS
-  window.debugDepositMetafields = function() {
-    console.group('🔍 DEPOSIT METAFIELD DEBUG ANALYSIS');
-    
-    console.log('📊 Window objects available:');
-    console.log('- window.productMetafields:', !!window.productMetafields);
-    console.log('- window.debugMetafields:', !!window.debugMetafields);
-    
-    if (window.debugMetafields) {
-      Object.entries(window.debugMetafields).forEach(([variantId, data]) => {
-        console.group(`🏷️ Variant ${variantId} Analysis`);
-        
-        console.log('📋 Raw metafield data:', data.raw_data);
-        console.log('✂️ Extracted strings:', data.extracted_strings);
-        console.log('🔢 V1 amounts (direct .amount):', data.v1_amounts);
-        console.log('🔢 V2 amounts (string manipulation):', data.v2_amounts);
-        
-        const v1Total = (data.v1_amounts.fuel_pump || 0) + (data.v1_amounts.injector || 0) + (data.v1_amounts.fuel_line || 0);
-        const v2Total = (data.v2_amounts.fuel_pump || 0) + (data.v2_amounts.injector || 0) + (data.v2_amounts.fuel_line || 0);
-        
-        console.log('💰 V1 Total:', v1Total);
-        console.log('💰 V2 Total:', v2Total);
-        
-        if (window.productMetafields[variantId]) {
-          console.log('✅ Final used values:', window.productMetafields[variantId]);
-          console.log('🔧 Method used:', window.productMetafields[variantId].method);
-        }
-        
-        console.groupEnd();
-      });
-    }
-    
-    if (window.productMetafields) {
-      console.log('🎯 Final productMetafields structure:', window.productMetafields);
-    }
-    
-    console.groupEnd();
-  };
-  
-  // Auto-run debug on page load
-  setTimeout(() => {
-    if (typeof window.debugDepositMetafields === 'function') {
-      window.debugDepositMetafields();
-    }
-  }, 1000);
 </script>
 
 <div class="deposit-variant-picker" {{ block.shopify_attributes }}>
