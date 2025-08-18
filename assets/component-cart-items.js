@@ -165,6 +165,9 @@ class CartItemsComponent extends Component {
         );
 
         morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
+
+        // Sync bundle quantities after successful cart update
+        this.#syncBundleQuantities();
       })
       .catch((error) => {
         console.error(error);
@@ -251,6 +254,102 @@ class CartItemsComponent extends Component {
     if (!sectionId) throw new Error('Section id missing');
 
     return sectionId;
+  }
+
+  /**
+   * Syncs bundle quantities for deposit products.
+   * Finds products with matching bundle_id and syncs deposit quantities to match main products.
+   */
+  async #syncBundleQuantities() {
+    try {
+      // Get current cart using Shopify AJAX Cart API
+      const cartResponse = await fetch('/cart.js');
+      if (!cartResponse.ok) {
+        throw new Error('Failed to fetch cart');
+      }
+      const cart = await cartResponse.json();
+      
+      // Group items by bundle_id
+      const bundles = {};
+      cart.items.forEach((item, index) => {
+        const bundleId = item.properties?.bundle_id;
+        if (bundleId) {
+          if (!bundles[bundleId]) {
+            bundles[bundleId] = { main: null, deposit: null };
+          }
+          
+          // Determine if this is main or deposit product based on deposit_option or is_deposit property
+          if (item.properties?.deposit_option) {
+            bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
+          } else if (item.properties?._is_deposit === 'true') {
+            bundles[bundleId].deposit = { item, lineNumber: index + 1 };
+          }
+        }
+      });
+      
+      // Check each bundle for quantity mismatches and handle removals
+      for (const [bundleId, bundle] of Object.entries(bundles)) {
+        const { main, deposit } = bundle;
+        
+        if (main && deposit) {
+          if (main.item.quantity !== deposit.item.quantity) {
+            // Update deposit quantity to match main product (including removal if main qty = 0)
+            const body = JSON.stringify({
+              line: deposit.lineNumber,
+              quantity: main.item.quantity,
+              sections: this.sectionId,
+              sections_url: window.location.pathname,
+            });
+            
+            const changeResponse = await fetch('/cart/change.js', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: body
+            });
+            
+            if (changeResponse.ok) {
+              // Re-render this section to reflect the change
+              const responseText = await changeResponse.text();
+              const parsedResponse = JSON.parse(responseText);
+              if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
+                morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
+              }
+            }
+          }
+        } else if (!main && deposit) {
+          // Remove orphaned deposit product
+          const body = JSON.stringify({
+            line: deposit.lineNumber,
+            quantity: 0,
+            sections: this.sectionId,
+            sections_url: window.location.pathname,
+          });
+          
+          const changeResponse = await fetch('/cart/change.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body
+          });
+          
+          if (changeResponse.ok) {
+            // Re-render this section to reflect the change
+            const responseText = await changeResponse.text();
+            const parsedResponse = JSON.parse(responseText);
+            if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
+              morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing bundle quantities:', error);
+    }
   }
 }
 

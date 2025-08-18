@@ -5,7 +5,6 @@ Can be added in Theme Editor under Product Information > Details
 Uses JSON string parsing for reliable MONEY metafield extraction
 {%- endcomment -%}
 
-<script src="{{ 'deposit-ultra-simple.js' | asset_url }}" defer></script>
 
 {% liquid
   assign product = product | default: closest.product
@@ -28,19 +27,12 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   endif
   
   comment
-  # Calculate deposit using reliable JSON string parsing method
+  # Get the first variant's metafield values using .value property and calculate total
   endcomment
-  assign initial_deposit = 0
   if show_deposit_options and first_variant
-    
-    comment
-    # Extract numeric values from MONEY metafields using JSON string manipulation
-    # This method works when .amount property access fails
-    endcomment
-    assign fuel_pump_deposit = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount | default: 0
-    assign injector_deposit = first_variant.metafields.custom.deposit_for_injectors.value.amount | default: 0
-    assign fuel_line_deposit = first_variant.metafields.custom.deposit_for_fuel_lines.value.amount | default: 0
-    
+    assign fuel_pump_deposit = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value
+    assign injector_deposit = first_variant.metafields.custom.deposit_for_injectors.value
+    assign fuel_line_deposit = first_variant.metafields.custom.deposit_for_fuel_lines.value
     assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
   endif
 %}
@@ -54,34 +46,36 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 <!-- DEBUG: Fuel line deposit: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
 <!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
 <!-- DEBUG: Individual amounts - Fuel pump: {{ fuel_pump_deposit }}, Injector: {{ injector_deposit }}, Fuel line: {{ fuel_line_deposit }} -->
-<!-- DEBUG: Test .value access - Fuel pump .value: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value }} -->
-<!-- DEBUG: Test .value.amount access - Injector .value.amount: {{ first_variant.metafields.custom.deposit_for_injectors.value.amount }} -->
 <script>
-  window.variantMetafields = window.variantMetafields || {};
+  window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
-    {% comment %}Extract MONEY metafield amounts with proper error handling{% endcomment %}
+    {% comment %}DEBUG: Log what variant we're processing{% endcomment %}
+    {% comment %}Extract values using same JSON parsing method{% endcomment %}
     {% assign fp_val = 0 %}
     {% assign inj_val = 0 %}
     {% assign fl_val = 0 %}
     
     {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
-      {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value.amount %}
+      {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value | divided_by: 100.0 %}
     {% endif %}
     
     {% if variant.metafields.custom.deposit_for_injectors %}
-      {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value.amount %}
+      {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value | divided_by: 100.0 %}
     {% endif %}
     
     {% if variant.metafields.custom.deposit_for_fuel_lines %}
-      {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value.amount %}
+      {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value | divided_by: 100.0 %}
     {% endif %}
     
-    window.variantMetafields["{{ variant.id }}"] = {
-      "fuel_pump_deposit": {{ fp_val | json }},
-      "injector_deposit": {{ inj_val | json }},
-      "fuel_line_deposit": {{ fl_val | json }}
+    window.productMetafields["{{ variant.id }}"] = {
+      "fuel_pump_deposit": {{ fp_val }},
+      "injector_deposit": {{ inj_val }},
+      "fuel_line_deposit": {{ fl_val }}
     };
   {% endfor %}
+  
+  // DEBUG: Log all metafields data
+  console.log('Product metafields loaded:', window.productMetafields);
 </script>
 
 <div class="deposit-variant-picker" {{ block.shopify_attributes }}>
@@ -93,9 +87,10 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   {% if block.settings.show_amount %}
     <p class="deposit-amount-display">
       {{ block.settings.amount_label }}: 
-      <strong class="deposit-amount">${{ initial_deposit | money_without_currency }}</strong>
+      <strong class="deposit-amount" data-initial-amount="{{ initial_deposit | money_without_currency }}">${{ initial_deposit | money_without_currency }}</strong>
     </p>
   {% endif %}
+
 
   <div class="deposit-options">
     {% if block.settings.show_label %}
@@ -128,104 +123,204 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 
   {% if block.settings.show_description %}
     <div class="deposit-description">
-      <p id="deposit-option-description">{{ block.settings.default_description }}</p>
+      <p class="description-default">{{ block.settings.default_description }}</p>
+      <p class="description-option" data-option="credit_card_on_file">
+        {{ block.settings.option1_description | default: "We will place a hold on your credit card for the deposit amount. The hold will be released when you return your old cores." }}
+      </p>
+      <p class="description-option" data-option="pay_core_deposit">
+        {{ block.settings.option2_description | default: "Pay the deposit now. You will receive a refund when you return your old cores." }}
+      </p>
+      <p class="description-option" data-option="return_cores_in_advance">
+        {{ block.settings.option3_description | default: "Return your old cores before ordering to avoid any deposit charges." }}
+      </p>
     </div>
   {% endif %}
 
 </div>
 
 <script>
-// Handle deposit variant dropdown changes
 document.addEventListener('DOMContentLoaded', function() {
   const dropdown = document.getElementById('deposit-variant-select');
-  const description = document.getElementById('deposit-option-description');
+  const depositPicker = document.querySelector('.deposit-variant-picker');
   
-  // Function to calculate current deposit amount
-  function getCurrentDepositAmount() {
-    const variantInput = document.querySelector('input[name="id"]');
-    let totalDeposit = 0;
-    
-    if (variantInput && variantInput.value && window.variantMetafields) {
-      const variantId = variantInput.value;
-      const metafields = window.variantMetafields[variantId];
-      if (metafields) {
-        totalDeposit = (parseFloat(metafields.fuel_pump_deposit) || 0) + 
-                      (parseFloat(metafields.injector_deposit) || 0) + 
-                      (parseFloat(metafields.fuel_line_deposit) || 0);
-      }
-    }
-    
-    return totalDeposit;
-  }
+  // Find all product forms on the page
+  const productForms = document.querySelectorAll('product-form');
   
-  // Function to update deposit amount display
-  function updateDepositDisplay(amount) {
-    const depositAmountEl = document.querySelector('.deposit-amount');
-    if (depositAmountEl) {
-      depositAmountEl.textContent = `$${amount.toFixed(2)}`;
-    }
-    
-    // Update dropdown option amounts
-    if (dropdown) {
-      const options = dropdown.querySelectorAll('option[data-variant-id]');
-      options.forEach(option => {
-        const optionValue = option.value;
-        const baseText = option.textContent.split(' - ')[0];
-        
-        if (optionValue === 'credit_card_on_file') {
-          option.textContent = `${baseText} - Hold $${amount.toFixed(2)}`;
-        } else if (optionValue === 'pay_core_deposit') {
-          option.textContent = `${baseText} - Pay $${amount.toFixed(2)}`;
+  // Function to disable/enable add-to-cart buttons
+  function updateAddToCartButtons(enable) {
+    productForms.forEach(form => {
+      const addToCartContainer = form.querySelector('[ref="addToCartButtonContainer"]');
+      if (addToCartContainer && typeof addToCartContainer.disable === 'function') {
+        if (enable) {
+          addToCartContainer.enable();
+        } else {
+          addToCartContainer.disable();
         }
-      });
-    }
+      }
+    });
   }
   
-  // Set initial deposit amount on page load
-  const initialAmount = getCurrentDepositAmount();
-  if (initialAmount > 0) {
-    updateDepositDisplay(initialAmount);
+  // Disable buttons on page load if deposit picker is present
+  if (dropdown && document.querySelector('.deposit-variant-picker')) {
+    updateAddToCartButtons(false);
   }
   
+  // Handle deposit option selection
   if (dropdown) {
     dropdown.addEventListener('change', function() {
       const selectedOption = this.value;
       
-      // Mark as valid selection made
+      
       this.classList.remove('invalid-selection');
       
-      // Update deposit amount display
-      const currentAmount = getCurrentDepositAmount();
-      updateDepositDisplay(currentAmount);
+      // Enable/disable add-to-cart buttons based on selection
+      updateAddToCartButtons(!!selectedOption);
       
-      // Update description based on selection
-      if (description) {
+      // Update deposit amount display based on selection
+      const depositAmountElement = document.querySelector('.deposit-amount');
+      if (depositAmountElement) {
+        const initialAmount = depositAmountElement.getAttribute('data-initial-amount');
+        
         switch(selectedOption) {
           case 'credit_card_on_file':
-            description.textContent = '{{ block.settings.option1_description | default: "We will place a hold on your credit card for the deposit amount. The hold will be released when you return your old cores." }}';
-            break;
-          case 'pay_core_deposit_upfront':
-            description.textContent = '{{ block.settings.option2_description | default: "Pay the deposit now. You will receive a refund when you return your old cores." }}';
+          case 'pay_core_deposit':
+            depositAmountElement.textContent = '$' + initialAmount;
             break;
           case 'return_cores_in_advance':
-            description.textContent = '{{ block.settings.option3_description | default: "Return your old cores before ordering to avoid any deposit charges." }}';
+            depositAmountElement.textContent = '$0.00';
+            break;
+          default:
+            // Reset to initial amount for unselected state
+            depositAmountElement.textContent = '$' + initialAmount;
             break;
         }
       }
       
-      // Trigger form update for cart submission
-      if (window.UltraSimpleDeposit) {
-        // Update the payment option in the deposit calculator
-        const event = new CustomEvent('deposit:option:change', {
-          detail: { option: selectedOption }
-        });
-        document.dispatchEvent(event);
+      // Update data attribute for CSS-based description display
+      if (depositPicker) {
+        if (selectedOption) {
+          depositPicker.setAttribute('data-selected', selectedOption);
+        } else {
+          depositPicker.removeAttribute('data-selected');
+        }
       }
     });
     
-    // Trigger initial description update
-    dropdown.dispatchEvent(new Event('change'));
+    // Only trigger initial change event if there's a selected value
+    if (dropdown.value) {
+      dropdown.dispatchEvent(new Event('change'));
+    }
   }
+
+  // Handle form submission to add deposit product when needed
+  const productFormElements = document.querySelectorAll('product-form form[action*="/cart/add"]');
+  
+  productFormElements.forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      // Only validate if deposit picker is present
+      const depositPicker = document.querySelector('.deposit-variant-picker');
+      if (!depositPicker) return; // No deposit picker, proceed normally
+      
+      // Validate deposit selection is required
+      const selectedDepositOption = dropdown?.value;
+      if (!selectedDepositOption) {
+        e.preventDefault();
+        dropdown?.classList.add('invalid-selection');
+        dropdown?.focus();
+        alert('Please select a deposit option before adding to cart.');
+        return false;
+      }
+      
+      // If deposit is required, add deposit product after main product
+      if (selectedDepositOption !== 'return_cores_in_advance') {
+        e.preventDefault(); // Prevent default to handle manually
+        
+        try {
+          const formData = new FormData(form);
+          const mainVariantId = formData.get('id');
+          const quantity = parseInt(formData.get('quantity') || '1');
+          
+          // Generate unique bundle ID for this main+deposit pair
+          const bundleId = Date.now().toString();
+          
+          // First, add the main product with deposit_option and bundle_id properties using AJAX
+          const mainResponse = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              items: [{
+                id: parseInt(mainVariantId),
+                quantity: quantity,
+                properties: {
+                  'deposit_option': selectedDepositOption,
+                  'bundle_id': bundleId
+                }
+              }]
+            })
+          });
+          
+          if (!mainResponse.ok) {
+            throw new Error('Failed to add main product');
+          }
+          
+          // Second, add deposit product using AJAX
+          const selectedOption = dropdown.querySelector('option:checked');
+          const depositVariantId = selectedOption?.getAttribute('data-variant-id');
+          
+          if (depositVariantId) {
+            const depositAmount = calculateDepositAmount(mainVariantId);
+            
+            const depositResponse = await fetch('/cart/add.js', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: JSON.stringify({
+                items: [{
+                  id: parseInt(depositVariantId),
+                  quantity: quantity,
+                  properties: {
+                    '_display_price': '$' + depositAmount.toFixed(2),
+                    'bundle_id': bundleId,
+                    '_is_deposit': 'true'
+                  }
+                }]
+              })
+            });
+            
+            if (!depositResponse.ok) {
+              console.error('Failed to add deposit product');
+            }
+          }
+          
+          // Redirect to cart
+          window.location.href = '/cart';
+          
+        } catch (error) {
+          console.error('Error adding products:', error);
+          alert('Failed to add products to cart. Please try again.');
+        }
+      }
+      // For 'return_cores_in_advance', let the form submit normally
+    });
+  });
+  
+  // Function to calculate deposit amount from main product metafields
+  function calculateDepositAmount(mainVariantId) {
+    const variantMetafields = window.productMetafields?.[mainVariantId];
+    if (!variantMetafields) return 0;
+    
+    const fuelPumpDeposit = variantMetafields.fuel_pump_deposit || 0;
+    const injectorDeposit = variantMetafields.injector_deposit || 0;
+    const fuelLineDeposit = variantMetafields.fuel_line_deposit || 0;
+    
+    return fuelPumpDeposit + injectorDeposit + fuelLineDeposit;
+  }
+
 });
 </script>
 {% else %}
@@ -283,6 +378,11 @@ document.addEventListener('DOMContentLoaded', function() {
     border-color: {{ block.settings.accent_color }};
   }
 
+  .deposit-variant-dropdown.invalid-selection {
+    border-color: #dc2626;
+    background-color: #fef2f2;
+  }
+
   .deposit-description {
     margin-top: 12px;
     padding: 12px;
@@ -291,6 +391,34 @@ document.addEventListener('DOMContentLoaded', function() {
     color: {{ block.settings.text_color }};
     font-size: 14px;
     line-height: 1.4;
+  }
+
+  .deposit-description p {
+    margin: 0;
+  }
+
+  /* Hide all descriptions by default */
+  .description-option {
+    display: none;
+  }
+
+  /* Show default description initially */
+  .description-default {
+    display: block;
+  }
+
+  /* Show specific descriptions based on dropdown selection */
+  .deposit-variant-picker[data-selected="credit_card_on_file"] .description-option[data-option="credit_card_on_file"],
+  .deposit-variant-picker[data-selected="pay_core_deposit"] .description-option[data-option="pay_core_deposit"],
+  .deposit-variant-picker[data-selected="return_cores_in_advance"] .description-option[data-option="return_cores_in_advance"] {
+    display: block;
+  }
+
+  /* Hide default when option is selected */
+  .deposit-variant-picker[data-selected="credit_card_on_file"] .description-default,
+  .deposit-variant-picker[data-selected="pay_core_deposit"] .description-default,
+  .deposit-variant-picker[data-selected="return_cores_in_advance"] .description-default {
+    display: none;
   }
 {% endstyle %}
 

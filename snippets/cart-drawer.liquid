@@ -13,11 +13,6 @@
   type="module"
   fetchpriority="low"
 ></script>
-<script
-  src="{{ 'cart-deposit-manager.js' | asset_url }}"
-  type="module"
-  fetchpriority="low"
-></script>
 
 <cart-drawer-component
   class="cart-drawer"
@@ -44,7 +39,6 @@
         class="cart-items-component"
         data-section-id="{{ section.id }}"
       >
-        <cart-deposit-manager style="display: none;"></cart-deposit-manager>
         {%- if cart.empty? -%}
           <div class="cart-drawer__header">
             <button

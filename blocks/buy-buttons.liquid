@@ -43,12 +43,11 @@
 >
   {%- if product != blank -%}
     {%- assign product_form_id = 'BuyButtons-ProductForm-' | append: block.id -%}
-    <script src="{{ 'product-deposit-form.js' | asset_url }}" type="module"></script>
-    <product-deposit-form
+    <script src="{{ 'product-form.js' | asset_url }}" type="module"></script>
+    <product-form
       data-section-id="{{ section.id }}"
       data-product-id="{{ product.id }}"
       data-product-url="{{ product.url }}"
-      data-quantity-default="{% if product.selected_or_first_available_variant.quantity_rule.min %}{{ product.selected_or_first_available_variant.quantity_rule.min }}{% else %}1{% endif %}"
     >
       <div
         class="visually-hidden"
@@ -97,7 +96,7 @@
           %}
         </div>
       {%- endform -%}
-    </product-deposit-form>
+    </product-form>
   {%- else -%}
     <div class="product-form-buttons">
       <button

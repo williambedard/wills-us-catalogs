@@ -221,7 +221,27 @@
                   {% endif %}
 
                   <div>
-                    {% if item.original_price != item.final_price %}
+                    {%- liquid
+                      comment
+                      # Check if this item has custom unit pricing (for individual item price display)
+                      endcomment
+                      assign custom_unit_price_display = nil
+                      for property in item.properties
+                        if property.first == '_display_price'
+                          comment
+                          # For deposit items, we want to show the custom price as the unit price
+                          endcomment
+                          assign custom_unit_price_display = property.last
+                          break
+                        endif
+                      endfor
+                    -%}
+                    
+                    {% if custom_unit_price_display != nil %}
+                      {%- comment -%} Use custom unit price for deposit items {%- endcomment -%}
+                      <span class="visually-hidden">{{ 'content.price' | t }}</span>
+                      <span>{{ custom_unit_price_display }}</span>
+                    {% elsif item.original_price != item.final_price %}
                       <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
                       <span>{{ item.final_price | money }}</span>
                       <span class="visually-hidden">{{ 'content.price_regular' | t }}</span>
@@ -254,9 +274,15 @@
                   headers="quantity"
                 >
                   {% # Here I want to pass some arguments to the quantity block so it knows which value should the input be set to. Though quantity block could be a snippet instead %}
-                  {% assign can_update_quantity = item.instructions.can_update_quantity
-                    | default: true, allow_false: true
-                  %}
+                  {% assign can_update_quantity = item.instructions.can_update_quantity | default: true, allow_false: true %}
+                  {% assign can_remove = item.instructions.can_remove | default: true, allow_false: true %}
+                  
+                  {% comment %} Disable quantity and removal controls for deposit products {% endcomment %}
+                  {% if item.properties._is_deposit == 'true' %}
+                    {% assign can_update_quantity = false %}
+                    {% assign can_remove = false %}
+                  {% endif %}
+                  
                   {% render 'quantity-selector',
                     product: item.product,
                     in_cart_quantity: item.quantity,
@@ -265,13 +291,18 @@
                     class: 'cart-primary-typography',
                     can_update_quantity: can_update_quantity
                   %}
+                  
+                  {% if item.properties._is_deposit == 'true' %}
+                    <p class="cart-items__deposit-note">
+                      <small style="color: #666; font-style: italic;">Quantity controlled by main product</small>
+                    </p>
+                  {% endif %}
 
                   <button
                     class="button button--tertiary cart-items__remove"
                     type="button"
                     aria-label="{{ 'accessibility.remove_item' | t: title: item.title | escape }}"
                     on:click="/onLineItemRemove/{{ item.index | plus: 1 }}"
-                    {% assign can_remove = item.instructions.can_remove | default: true, allow_false: true %}
                     {% if can_remove == false %}
                       hidden
                     {% endif %}
@@ -305,12 +336,43 @@
                   headers="productTotal"
                 >
                   {%- liquid
-                    if settings.currency_code_enabled_cart_items
-                      assign price = item.final_line_price | money_with_currency
-                      assign unit_price = item.unit_price | money_with_currency
+                    comment
+                    # Check if this is a deposit product with custom pricing
+                    endcomment
+                    assign custom_price_display = nil
+                    for property in item.properties
+                      if property.first == '_display_price'
+                        assign custom_price_display = property.last
+                        break
+                      endif
+                    endfor
+                    
+                    if custom_price_display != nil
+                      comment
+                      # For deposit products, calculate subtotal: custom unit price × quantity
+                      # Extract numeric value from display price (remove $ and convert to cents)
+                      endcomment
+                      assign custom_unit_price_str = custom_price_display | remove: '$' | remove: ','
+                      assign custom_unit_price_cents = custom_unit_price_str | times: 100
+                      assign custom_line_price_cents = custom_unit_price_cents | times: item.quantity
+                      
+                      assign unit_price = custom_price_display
+                      if settings.currency_code_enabled_cart_items
+                        assign price = custom_line_price_cents | money_with_currency
+                      else
+                        assign price = custom_line_price_cents | money
+                      endif
                     else
-                      assign price = item.final_line_price | money
-                      assign unit_price = item.unit_price | money
+                      comment
+                      # Use standard pricing for regular products
+                      endcomment
+                      if settings.currency_code_enabled_cart_items
+                        assign price = item.final_line_price | money_with_currency
+                        assign unit_price = item.unit_price | money_with_currency
+                      else
+                        assign price = item.final_line_price | money
+                        assign unit_price = item.unit_price | money
+                      endif
                     endif
                   -%}
                   <text-component value="{{ price | strip_html }}">{{ price }}</text-component>
