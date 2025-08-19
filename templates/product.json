@@ -259,7 +259,7 @@
             "magical_product_fees_associated_fees_AM7fhV": {
               "type": "shopify://apps/magical-product-fees/blocks/associated-fees/8c765569-e503-4260-ade8-582a0959d5a2",
               "settings": {
-                "information": ""
+                "information": "Your credit card will be held on file for $100.00. Cores must be returned within 28 days of original order date to avoid being charged. Customers using a debit card may see a pending transaction on your bank account until the cores are returned."
               }
             },
             "group_JbmQwr": {
