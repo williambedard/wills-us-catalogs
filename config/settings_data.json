@@ -84,6 +84,14 @@
         "type": "shopify://apps/globo-product-option/blocks/app-embed-block/fdc9fad5-1a0f-4bd4-9c8a-1af6a6eef6b8",
         "disabled": true,
         "settings": {}
+      },
+      "12622292715052272319": {
+        "type": "shopify://apps/magical-product-fees/blocks/magical-mandatory-fees/8c765569-e503-4260-ade8-582a0959d5a2",
+        "disabled": false,
+        "settings": {
+          "fees_required_message": "",
+          "fees_consent_description": ""
+        }
       }
     },
     "color_schemes": {
