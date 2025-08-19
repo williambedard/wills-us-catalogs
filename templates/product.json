@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -247,6 +256,12 @@
               },
               "block_order": []
             },
+            "magical_product_fees_associated_fees_AM7fhV": {
+              "type": "shopify://apps/magical-product-fees/blocks/associated-fees/8c765569-e503-4260-ade8-582a0959d5a2",
+              "settings": {
+                "information": ""
+              }
+            },
             "group_JbmQwr": {
               "type": "group",
               "name": "Policies",
@@ -492,6 +507,7 @@
             "variant_picker_R3rGDr",
             "deposit_variant_picker_kxcTNT",
             "buy_buttons_eYQEYi",
+            "magical_product_fees_associated_fees_AM7fhV",
             "group_JbmQwr",
             "text_aEtTtq"
           ]
