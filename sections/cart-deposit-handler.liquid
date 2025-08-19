@@ -1,0 +1,91 @@
+{%- doc -%}
+  Renders the cart deposit manager component that ensures consistency
+  between main products and their associated deposit products.
+
+  This component handles:
+  - Quantity synchronization (deposits always quantity 1)
+  - Orphaned deposit removal
+  - Missing deposit addition
+  - Cart state validation
+{%- enddoc -%}
+
+<script src="{{ 'cart-deposit-manager.js' | asset_url }}" type="module"></script>
+
+<cart-deposit-manager 
+  class="cart-deposit-manager"
+  data-section-id="{{ section.id }}"
+  style="display: none;"
+>
+  <!-- Hidden component - manages cart state in background -->
+</cart-deposit-manager>
+
+{% comment %}
+  Expose necessary configuration to JavaScript
+{% endcomment %}
+<script>
+  window.Theme = window.Theme || {};
+  window.Theme.routes = window.Theme.routes || {};
+  Object.assign(window.Theme.routes, {
+    cart_add_url: '{{ routes.cart_add_url }}',
+    cart_update_url: '{{ routes.cart_update_url }}',
+    cart_url: '{{ routes.cart_url }}'
+  });
+
+  {% assign deposit_product = all_products['refundable-core-deposit'] %}
+  {% if deposit_product %}
+    {% assign credit_card_variant = deposit_product.variants | where: 'title', 'Credit card on file' | first %}
+    {% assign pay_deposit_variant = deposit_product.variants | where: 'title', 'Pay core deposit upfront' | first %}
+    {% assign return_first_variant = deposit_product.variants | where: 'title', 'Return cores in advance' | first %}
+    
+    window.depositProductConfig = window.depositProductConfig || {};
+    Object.assign(window.depositProductConfig, {
+      handle: 'refundable-core-deposit',
+      productId: '{{ deposit_product.id }}',
+      variants: {
+        creditCard: {
+          id: '{{ credit_card_variant.id }}',
+          title: '{{ credit_card_variant.title }}',
+          price: {{ credit_card_variant.price | money_without_currency | remove: ',' }}
+        },
+        payDeposit: {
+          id: '{{ pay_deposit_variant.id }}',
+          title: '{{ pay_deposit_variant.title }}',
+          price: {{ pay_deposit_variant.price | money_without_currency | remove: ',' }}
+        },
+        returnFirst: {
+          id: '{{ return_first_variant.id }}',
+          title: '{{ return_first_variant.title }}',
+          price: {{ return_first_variant.price | money_without_currency | remove: ',' }}
+        }
+      }
+    });
+  {% endif %}
+</script>
+
+{% stylesheet %}
+  .cart-deposit-manager {
+    /* Hidden component - no visual styles needed */
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Cart Deposit Handler",
+  "tag": "div",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Manages deposit product consistency in the cart. This is a background component with no visible UI."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Cart Deposit Handler",
+      "category": "Cart"
+    }
+  ]
+}
+{% endschema %}
