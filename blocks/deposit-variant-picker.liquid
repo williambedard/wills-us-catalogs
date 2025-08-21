@@ -124,6 +124,52 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     addDepositToCart(depositVariantId, depositQuantity, bundleId, depositAmount, selectedDepositOption);
   }
   
+  // Function to add deposit product to cart using Shopify's AJAX Cart API
+  async function addDepositToCart(depositVariantId, quantity, bundleId, totalAmount, depositOption) {
+    try {
+      const response = await fetch(window.Theme?.routes?.cart_add_url || '/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          items: [{
+            id: parseInt(depositVariantId),
+            quantity: quantity,
+            properties: {
+              '_display_price': '$' + totalAmount.toFixed(2),  // Private property for display
+              'bundle_id': bundleId,                          // Links to main product
+              '_is_deposit': 'true',                          // Identifies as deposit item
+              'deposit_option': depositOption,                 // Which option was selected
+              '_deposit_breakdown': `${quantity} × $100.00`   // Show calculation
+            }
+          }]),
+          sections: "cart-items,cart-icon-bubble,cart-live-region-text,cart-footer" // Update cart UI
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Deposit product added to cart:', {
+        variantId: depositVariantId,
+        quantity: quantity,
+        totalAmount: totalAmount,
+        bundleId: bundleId,
+        response: result
+      });
+      
+      // The theme will automatically dispatch cart update events for UI updates
+      
+    } catch (error) {
+      console.error('❌ Failed to add deposit product to cart:', error);
+      alert('Failed to add deposit to cart. Please try again.');
+    }
+  }
+  
   // Function to update deposit amounts when variant changes
   function updateDepositAmountsForVariant(variantId) {
     const depositAmount = calculateDepositAmount(variantId);
