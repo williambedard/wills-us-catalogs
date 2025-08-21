@@ -126,8 +126,18 @@ class CartItemsComponent extends Component {
         }
       });
 
+      // Quick validation before making the request
+      const cartCheck = await fetch('/cart.js');
+      const currentCart = await cartCheck.json();
+      const lineNum = parseInt(line, 10);
+      
+      if (lineNum < 1 || lineNum > currentCart.items.length) {
+        console.error(`Line ${lineNum} invalid. Cart has ${currentCart.items.length} items`);
+        return;
+      }
+
       const body = JSON.stringify({
-        line: parseInt(line, 10),
+        line: lineNum,
         quantity: parseInt(quantity, 10),
         sections: Array.from(sectionsToUpdate).join(','),
         sections_url: window.location.pathname,
@@ -137,11 +147,20 @@ class CartItemsComponent extends Component {
 
       const response = await fetch('/cart/change.js', fetchConfig('json', { body }));
       const responseText = await response.text();
+      
+      if (!response.ok) {
+        console.error(`Cart change failed: ${response.status}`);
+        console.error('Response:', responseText);
+        resetShimmer(this);
+        return;
+      }
+      
       const parsedResponseText = JSON.parse(responseText);
 
       resetShimmer(this);
 
       if (parsedResponseText.errors) {
+        console.error('Cart errors:', parsedResponseText.errors);
         this.#handleCartError(line, parsedResponseText);
         return;
       }
