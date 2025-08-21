@@ -237,9 +237,27 @@ document.addEventListener('DOMContentLoaded', function() {
           const quantity = parseInt(formData.get('quantity') || '1');
           
           // Generate unique bundle ID for this main+deposit pair
-          const bundleId = Date.now().toString();
+          // Include variant ID and random component to ensure uniqueness across different products
+          const bundleId = `${Date.now()}_${mainVariantId}_${Math.random().toString(36).substr(2, 9)}`;
           
-          // First, add the main product with deposit_option and bundle_id properties using AJAX
+          // First, add the main product with deposit_option, bundle_id, and component quantities
+          const variantMetafields = window.productMetafields?.[mainVariantId];
+          const mainProductProps = {
+            'deposit_option': selectedDepositOption,
+            'bundle_id': bundleId
+          };
+          
+          // Add component quantities as visible properties for customer transparency
+          if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
+            mainProductProps['Injectors required'] = variantMetafields.injector_quantity.toString();
+          }
+          if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
+            mainProductProps['Fuel pumps required'] = variantMetafields.fuel_pump_quantity.toString();
+          }
+          if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
+            mainProductProps['Fuel lines required'] = variantMetafields.fuel_line_quantity.toString();
+          }
+          
           const mainResponse = await fetch('/cart/add.js', {
             method: 'POST',
             headers: {
@@ -250,10 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
               items: [{
                 id: parseInt(mainVariantId),
                 quantity: quantity,
-                properties: {
-                  'deposit_option': selectedDepositOption,
-                  'bundle_id': bundleId
-                }
+                properties: mainProductProps
               }]
             })
           });
