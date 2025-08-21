@@ -144,7 +144,6 @@ class CartDepositManager extends Component {
         if (depositItem.quantity !== requiredDepositQuantity) {
           updates[depositItem.key] = requiredDepositQuantity;
           needsUpdate = true;
-          console.log(`Syncing deposit quantity from ${depositItem.quantity} to ${requiredDepositQuantity} for main product quantity ${linkedMain.quantity}`);
         }
       }
     }
@@ -187,7 +186,6 @@ class CartDepositManager extends Component {
   async #addMissingDeposits(depositItems, mainProductItems) {
     // Disabled: Missing deposits are now handled by the PDP logic
     // This prevents duplicate deposits and ensures proper metafield calculation
-    console.log('Missing deposit check disabled - handled by PDP');
   }
 
   /**
@@ -211,7 +209,6 @@ class CartDepositManager extends Component {
   async #addMissingDepositForMainProduct(mainItem) {
     // Disabled: Missing deposits are now handled by the PDP logic
     // This method was causing POST errors and is no longer needed
-    console.log('Missing deposit addition disabled - handled by PDP');
   }
 
   /**
