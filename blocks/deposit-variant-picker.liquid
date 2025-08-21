@@ -79,9 +79,38 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // DEBUG: Log all metafields data (quantities only)
   console.log('Product metafields loaded:', window.productMetafields);
   
-  // DEBUG: Keep cart event logging for testing
+  // Listen for theme's cart events to add deposit products automatically
   document.addEventListener('cart:update', function(event) {
-    console.log('[OK] Theme cart event working:', event.detail);
+    console.log('[OK] Theme cart event detected:', event.detail);
+    
+    // Check if this was a main product addition that needs a deposit
+    const eventData = event.detail?.data;
+    if (eventData && eventData.source === 'product-form-component' && !eventData.didError) {
+      // Get the added product information
+      const productId = eventData.productId;
+      const variantId = event.detail.sourceId; // This should be the variant ID
+      
+      // Check if current product has deposit requirements
+      const depositPicker = document.querySelector('.deposit-variant-picker');
+      const dropdown = document.getElementById('deposit-variant-select');
+      
+      if (depositPicker && dropdown && dropdown.value) {
+        const selectedOption = dropdown.value;
+        const selectedOptionElement = dropdown.querySelector('option:checked');
+        const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+        
+        // Only add deposit for non-return options
+        if (selectedOption !== 'return_cores_in_advance' && depositVariantId) {
+          const depositAmount = calculateDepositAmount(variantId);
+          if (depositAmount > 0) {
+            console.log('[DEPOSIT] Adding deposit product after main product cart event');
+            setTimeout(() => {
+              addDepositToCart(depositVariantId, Math.ceil(depositAmount / 100), Date.now().toString(), depositAmount, selectedOption);
+            }, 100); // Small delay to ensure main product is processed
+          }
+        }
+      }
+    }
   });
   
   // Function to add deposit product to cart using Shopify's AJAX Cart API
