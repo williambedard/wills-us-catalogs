@@ -1,3 +1,80 @@
-{% comment %}
-  Cart bubble removed - not needed for this store
-{% endcomment %}
+{%- doc -%}
+  Renders the cart bubble that shows the item count.
+  
+  Usage:
+  {%- render 'cart-bubble', limit: 100, live_region: true, test_id: 'cart' -%}
+{%- enddoc -%}
+
+{%- assign limit = limit | default: 99 -%}
+{%- assign live_region = live_region | default: false -%}
+
+<div
+  class="cart-bubble{% if cart == empty %} visually-hidden{% endif %}"
+  {% if test_id %}data-testid="{{ test_id }}-bubble"{% endif %}
+  ref="cartBubble"
+>
+  <span
+    class="cart-bubble__text"
+    ref="cartBubbleText"
+    {% if live_region %}
+      aria-live="polite"
+      aria-atomic="true"
+    {% endif %}
+  >
+    <span
+      class="cart-bubble__text-count{% if cart == empty %} hidden{% endif %}"
+      ref="cartBubbleCount"
+    >
+      {%- if cart.item_count <= limit -%}{{ cart.item_count }}{%- endif -%}
+    </span>
+  </span>
+</div>
+
+{% stylesheet %}
+  .cart-bubble {
+    --cart-bubble-size: 24px;
+    --cart-bubble-top: -8px;
+    --cart-bubble-right: -8px;
+
+    position: absolute;
+    top: var(--cart-bubble-top);
+    right: var(--cart-bubble-right);
+    width: var(--cart-bubble-size);
+    height: var(--cart-bubble-size);
+    background-color: var(--color-accent);
+    color: var(--color-accent-text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size--xs);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    z-index: 1;
+  }
+
+  .cart-bubble--animating {
+    animation: cart-bubble-pulse 0.3s ease-in-out;
+  }
+
+  @keyframes cart-bubble-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+  }
+
+  .cart-bubble__text {
+    display: block;
+  }
+
+  .cart-bubble__text-count {
+    display: block;
+  }
+
+  .cart-bubble__text-count.hidden {
+    display: none;
+  }
+{% endstylesheet %}
