@@ -201,6 +201,20 @@
                         endfor
                       -%}
                       
+                      {%- comment -%} DEBUG: Show product type detection {%- endcomment -%}
+                      {%- if is_deposit_product -%}
+                        <div class="cart-items__properties" style="color: red; font-size: 0.8em;">
+                          <dt>DEBUG:</dt>
+                          <dd>This is a DEPOSIT product</dd>
+                        </div>
+                      {%- endif -%}
+                      {%- if is_main_product -%}
+                        <div class="cart-items__properties" style="color: blue; font-size: 0.8em;">
+                          <dt>DEBUG:</dt>
+                          <dd>This is a MAIN product</dd>
+                        </div>
+                      {%- endif -%}
+                      
                       {%- for property in item.properties -%}
                         {%- assign property_first_char = property.first | slice: 0 -%}
                         {%- assign show_property = false -%}
