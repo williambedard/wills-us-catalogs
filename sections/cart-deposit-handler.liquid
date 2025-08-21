@@ -27,9 +27,9 @@
   {% if deposit_product %}
     // DEBUG: Deposit product found
     console.log('✅ Deposit product found:', '{{ deposit_product.title }}', 'ID:', '{{ deposit_product.id }}');
-    {% assign credit_card_variant = deposit_product.variants | where: 'title', 'Credit card on file' | first %}
-    {% assign pay_deposit_variant = deposit_product.variants | where: 'title', 'Pay core deposit upfront' | first %}
-    {% assign return_first_variant = deposit_product.variants | where: 'title', 'Return cores in advance' | first %}
+    {% assign credit_card_variant = deposit_product.variants | where: 'title', 'Credit Card on File' | first %}
+    {% assign pay_deposit_variant = deposit_product.variants | where: 'title', 'Pay Core Deposit' | first %}
+    {% assign return_first_variant = deposit_product.variants | where: 'title', 'Return Cores in Advance' | first %}
     
     // DEBUG: Check which variants were found
     console.log('Deposit variants found:', {
