@@ -138,11 +138,11 @@ Uses JSON string parsing for reliable MONEY metafield extraction
             id: parseInt(depositVariantId),
             quantity: quantity,
             properties: {
-              '_display_price': '$' + totalAmount.toFixed(2),  // Private property for display
-              'bundle_id': bundleId,                          // Links to main product
-              '_is_deposit': 'true',                          // Identifies as deposit item
-              'deposit_option': depositOption,                 // Which option was selected
-              '_deposit_breakdown': quantity + ' x $100.00'   // Show calculation
+              '_display_price': '$' + totalAmount.toFixed(2),
+              'bundle_id': bundleId,
+              '_is_deposit': 'true',
+              'deposit_option': depositOption,
+              '_deposit_breakdown': quantity + ' x $100.00'
             }
           }]),
           sections: "cart-items,cart-icon-bubble,cart-live-region-text,cart-footer" // Update cart UI
