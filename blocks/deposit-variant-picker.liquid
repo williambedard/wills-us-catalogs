@@ -73,10 +73,56 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // DEBUG: Log all metafields data (quantities only)
   console.log('Product metafields loaded:', window.productMetafields);
   
-  // DEBUG: Test that theme's cart events are working after cleanup
+  // Hook into theme's cart events to add deposit product after main product
   document.addEventListener('cart:update', function(event) {
     console.log('✅ Theme cart event working:', event.detail);
+    
+    // Check if this is from our product form and needs deposit handling
+    const isFromProductForm = event.detail?.data?.source === 'product-form-component';
+    const depositPicker = document.querySelector('.deposit-variant-picker');
+    
+    if (isFromProductForm && depositPicker) {
+      handleDepositAddition(event);
+    }
   });
+  
+  // Function to handle adding deposit product after main product is added
+  function handleDepositAddition(cartEvent) {
+    const dropdown = document.getElementById('deposit-variant-select');
+    const selectedDepositOption = dropdown?.value;
+    
+    if (!selectedDepositOption || selectedDepositOption === 'return_cores_in_advance') {
+      console.log('🔄 Skipping deposit addition - no deposit required');
+      return;
+    }
+    
+    const selectedOptionElement = dropdown.querySelector('option:checked');
+    const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+    
+    if (!depositVariantId) {
+      console.error('❌ No deposit variant ID found');
+      return;
+    }
+    
+    // Get main product info from the cart event
+    const mainVariantId = cartEvent.detail.sourceId; // The variant that was just added
+    const depositAmount = calculateDepositAmount(mainVariantId);
+    const depositQuantity = Math.ceil(depositAmount / 100); // Each deposit variant = $100
+    
+    // Generate unique bundle ID to link main and deposit products
+    const bundleId = Date.now().toString();
+    
+    console.log('🔗 Adding deposit product to cart:', {
+      depositVariantId,
+      depositQuantity,
+      depositAmount,
+      bundleId,
+      selectedOption: selectedDepositOption
+    });
+    
+    // Add deposit product using theme's cart system
+    addDepositToCart(depositVariantId, depositQuantity, bundleId, depositAmount, selectedDepositOption);
+  }
   
   // Function to update deposit amounts when variant changes
   function updateDepositAmountsForVariant(variantId) {
