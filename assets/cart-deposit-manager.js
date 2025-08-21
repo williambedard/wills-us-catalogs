@@ -209,67 +209,9 @@ class CartDepositManager extends Component {
    * @param {object} mainItem 
    */
   async #addMissingDepositForMainProduct(mainItem) {
-    try {
-      const depositConfig = window.depositProductConfig;
-      if (!depositConfig?.variants) {
-        console.error('Deposit product configuration not found');
-        return;
-      }
-      
-      const depositOption = mainItem.properties.deposit_option;
-      
-      // Get the correct deposit variant
-      let variantId;
-      switch (depositOption) {
-        case 'credit_card_on_file':
-          variantId = depositConfig.variants.creditCard.id;
-          break;
-        case 'pay_core_deposit':
-          variantId = depositConfig.variants.payDeposit.id;
-          break;
-        default:
-          return; // Invalid deposit option
-      }
-      
-      const formData = new FormData();
-      formData.append('id', variantId);
-      // This shouldn't happen since missing deposits are now handled by the PDP logic
-      // But if it does, we need to calculate deposit amount from the variant metafields
-      // For now, just add quantity 1 as a fallback
-      formData.append('quantity', '1');
-      formData.append('properties[_is_deposit]', 'true');
-      formData.append('properties[bundle_id]', mainItem.properties.bundle_id || '');
-      formData.append('properties[_deposit_unit_amount]', '100'); // Fallback amount
-      formData.append('properties[_main_product_quantity]', mainItem.quantity.toString());
-      
-      // Add component data if available
-      if (mainItem.properties.component_injectors) {
-        formData.append('properties[component_injectors]', mainItem.properties.component_injectors);
-      }
-      if (mainItem.properties.component_fuel_lines) {
-        formData.append('properties[component_fuel_lines]', mainItem.properties.component_fuel_lines);
-      }
-      if (mainItem.properties.component_fuel_pumps) {
-        formData.append('properties[component_fuel_pumps]', mainItem.properties.component_fuel_pumps);
-      }
-      
-      const response = await fetch(window.Theme.routes.cart_add_url, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
-      });
-      
-      if (response.ok) {
-        console.log(`Added missing deposit for main product: ${mainItem.id}`);
-        // Dispatch event to update cart UI
-        document.dispatchEvent(new CustomEvent('cart:change', {
-          detail: { source: 'deposit-manager' }
-        }));
-      }
-      
-    } catch (error) {
-      console.error('Failed to add missing deposit:', error);
-    }
+    // Disabled: Missing deposits are now handled by the PDP logic
+    // This method was causing POST errors and is no longer needed
+    console.log('Missing deposit addition disabled - handled by PDP');
   }
 
   /**
