@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
       
       // DEBUG: Log selected deposit variant
-      console.log('💰 Deposit option selected:', {
+      console.log('[DEPOSIT] Option selected:', {
         option: selectedOption,
         variantId: depositVariantId,
         variantTitle: selectedOptionElement?.textContent?.trim()
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
       const depositAmount = calculateDepositAmount(mainVariantId);
       
-      console.log('🛒 Form submission - will add to cart:', {
+      console.log('[FORM] Submission - will add to cart:', {
         mainProduct: {
           variantId: mainVariantId,
           quantity: parseInt(quantity)
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Store bundle_id for the deposit addition later
         window._currentBundleId = bundleId;
         
-        console.log('🔗 Added bundle_id to main product:', bundleId);
+        console.log('[BUNDLE] Added bundle_id to main product:', bundleId);
       }
       
       // Let the form submit normally - theme will handle cart addition
