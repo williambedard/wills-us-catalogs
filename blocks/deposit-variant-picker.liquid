@@ -79,39 +79,65 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // DEBUG: Log all metafields data (quantities only)
   console.log('Product metafields loaded:', window.productMetafields);
   
-  // Listen for theme's cart events to add deposit products automatically
-  document.addEventListener('cart:update', function(event) {
-    console.log('[OK] Theme cart event detected:', event.detail);
+  // Store original fetch function to intercept cart API calls
+  const originalFetch = window.fetch;
+  
+  // Intercept fetch calls to detect when main products are added to cart
+  window.fetch = function(...args) {
+    const [resource, config] = args;
     
-    // Check if this was a main product addition that needs a deposit
-    const eventData = event.detail?.data;
-    if (eventData && eventData.source === 'product-form-component' && !eventData.didError) {
-      // Get the added product information
-      const productId = eventData.productId;
-      const variantId = event.detail.sourceId; // This should be the variant ID
-      
-      // Check if current product has deposit requirements
-      const depositPicker = document.querySelector('.deposit-variant-picker');
-      const dropdown = document.getElementById('deposit-variant-select');
-      
-      if (depositPicker && dropdown && dropdown.value) {
-        const selectedOption = dropdown.value;
-        const selectedOptionElement = dropdown.querySelector('option:checked');
-        const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
-        
-        // Only add deposit for non-return options
-        if (selectedOption !== 'return_cores_in_advance' && depositVariantId) {
-          const depositAmount = calculateDepositAmount(variantId);
-          if (depositAmount > 0) {
-            console.log('[DEPOSIT] Adding deposit product after main product cart event');
-            setTimeout(() => {
-              addDepositToCart(depositVariantId, Math.ceil(depositAmount / 100), Date.now().toString(), depositAmount, selectedOption);
-            }, 100); // Small delay to ensure main product is processed
+    // Check if this is a cart/add.js call
+    if (resource && resource.includes('/cart/add.js')) {
+      // Call original fetch and handle the response
+      return originalFetch.apply(this, args)
+        .then(response => {
+          // Clone response so it can be used by both our code and the theme
+          const responseClone = response.clone();
+          
+          // If successful, check if we need to add deposit
+          if (response.ok) {
+            responseClone.json().then(cartData => {
+              console.log('[CART-ADD] Detected successful cart/add.js call:', cartData);
+              
+              // Check if current product has deposit requirements
+              const depositPicker = document.querySelector('.deposit-variant-picker');
+              const dropdown = document.getElementById('deposit-variant-select');
+              
+              if (depositPicker && dropdown && dropdown.value) {
+                const selectedOption = dropdown.value;
+                const selectedOptionElement = dropdown.querySelector('option:checked');
+                const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+                
+                // Only add deposit for non-return options
+                if (selectedOption !== 'return_cores_in_advance' && depositVariantId) {
+                  // Get the variant ID from the added items
+                  if (cartData.items && cartData.items.length > 0) {
+                    const addedItem = cartData.items[cartData.items.length - 1]; // Get last added item
+                    const variantId = addedItem.variant_id.toString();
+                    const depositAmount = calculateDepositAmount(variantId);
+                    
+                    if (depositAmount > 0) {
+                      console.log('[DEPOSIT] Adding deposit product after main product added to cart');
+                      setTimeout(() => {
+                        const bundleId = Date.now().toString();
+                        addDepositToCart(depositVariantId, Math.ceil(depositAmount / 100), bundleId, depositAmount, selectedOption);
+                      }, 200); // Small delay to ensure main product is processed
+                    }
+                  }
+                }
+              }
+            }).catch(err => {
+              console.warn('[CART-ADD] Could not parse cart response:', err);
+            });
           }
-        }
-      }
+          
+          return response; // Return original response to theme
+        });
     }
-  });
+    
+    // For all other fetch calls, use original fetch
+    return originalFetch.apply(this, args);
+  };
   
   // Function to add deposit product to cart using Shopify's AJAX Cart API
   async function addDepositToCart(depositVariantId, quantity, bundleId, totalAmount, depositOption) {
