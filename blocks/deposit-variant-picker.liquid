@@ -27,8 +27,8 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   endif
   
   comment
-  # Get the first variant's quantity metafields and calculate total using unit prices
-  # Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
+  # Get the first variant's quantity metafields and calculate total using unit prices (in cents)
+  # Unit prices: Injectors $100 (10000 cents), Fuel Lines $100 (10000 cents), Fuel Pumps $200 (20000 cents)
   endcomment
   if show_deposit_options and first_variant
     assign num_injectors = first_variant.metafields.custom.number_of_injectors.value | default: 0
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!variantMetafields) return 0;
     
     // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
-    // Values are already calculated server-side, just sum them
+    // Values are calculated server-side in cents, then converted to dollars for display
     const fuelPumpDeposit = variantMetafields.fuel_pump_deposit || 0;
     const injectorDeposit = variantMetafields.injector_deposit || 0;
     const fuelLineDeposit = variantMetafields.fuel_line_deposit || 0;
