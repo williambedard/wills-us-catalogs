@@ -70,7 +70,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     };
   {% endfor %}
   
-  // DEBUG: Log all metafields data
+  // DEBUG: Log all metafields data (quantities only)
   console.log('Product metafields loaded:', window.productMetafields);
   
   // Function to update deposit amounts when variant changes
@@ -356,22 +356,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Function to calculate deposit amount from main product metafields
-  // Now using quantity-based metafields with unit prices calculated server-side
+  // Function to calculate deposit amount from quantities only
+  // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
   function calculateDepositAmount(mainVariantId) {
     const variantMetafields = window.productMetafields?.[mainVariantId];
-    if (!variantMetafields) return 0;
+    if (!variantMetafields || !variantMetafields.quantities) return 0;
     
-    // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
-    // Values are calculated server-side in cents, then converted to dollars for display
-    const fuelPumpDeposit = variantMetafields.fuel_pump_deposit || 0;
-    const injectorDeposit = variantMetafields.injector_deposit || 0;
-    const fuelLineDeposit = variantMetafields.fuel_line_deposit || 0;
+    const quantities = variantMetafields.quantities;
     
-    const totalDeposit = fuelPumpDeposit + injectorDeposit + fuelLineDeposit;
+    // Calculate deposits from quantities using unit prices
+    const injectorDeposit = (quantities.injectors || 0) * 100;
+    const fuelLineDeposit = (quantities.fuel_lines || 0) * 100;
+    const fuelPumpDeposit = (quantities.fuel_pumps || 0) * 200;
+    
+    const totalDeposit = injectorDeposit + fuelLineDeposit + fuelPumpDeposit;
     
     console.log(`Deposit calculation for variant ${mainVariantId}:`, {
-      quantities: variantMetafields.quantities,
+      quantities,
+      unitPrices: { injectors: 100, fuel_lines: 100, fuel_pumps: 200 },
       deposits: { injectorDeposit, fuelLineDeposit, fuelPumpDeposit },
       totalDeposit
     });
