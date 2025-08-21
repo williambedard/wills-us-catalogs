@@ -142,7 +142,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
               'bundle_id': bundleId,                          // Links to main product
               '_is_deposit': 'true',                          // Identifies as deposit item
               'deposit_option': depositOption,                 // Which option was selected
-              '_deposit_breakdown': `${quantity} × $100.00`   // Show calculation
+              '_deposit_breakdown': quantity + ' x $100.00'   // Show calculation
             }
           }]),
           sections: "cart-items,cart-icon-bubble,cart-live-region-text,cart-footer" // Update cart UI
