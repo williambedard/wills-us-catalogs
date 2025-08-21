@@ -336,8 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       ];
       
-      console.log('[CART] Sending both items:', items);
-      
       const response = await fetch(window.Shopify?.routes?.root + 'cart/add.js', {
         method: 'POST',
         headers: {
@@ -352,19 +350,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       const result = await response.json();
-      console.log('[SUCCESS] Both products added:', result);
-      
-      // Log line item properties for each added product
-      if (result.items && result.items.length > 0) {
-        result.items.forEach((item, index) => {
-          console.log(`[PROPERTIES] Item ${index + 1} (${item.product_title}):`, {
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            properties: item.properties || {},
-            key: item.key
-          });
-        });
-      }
       
       // Redirect to cart (same as theme default behavior)
       window.location.href = '/cart';
