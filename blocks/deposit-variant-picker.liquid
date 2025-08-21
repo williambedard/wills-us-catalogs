@@ -112,7 +112,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     // Use the stored bundle ID from the main product form submission
     const bundleId = window._currentBundleId || Date.now().toString();
     
-    console.log('🔗 Adding deposit product to cart:', {
+    console.log('[ADD] Adding deposit product to cart:', {
       depositVariantId,
       depositQuantity,
       depositAmount,
@@ -154,7 +154,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
       }
       
       const result = await response.json();
-      console.log('✅ Deposit product added to cart:', {
+      console.log('[SUCCESS] Deposit product added to cart:', {
         variantId: depositVariantId,
         quantity: quantity,
         totalAmount: totalAmount,
@@ -165,7 +165,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
       // The theme will automatically dispatch cart update events for UI updates
       
     } catch (error) {
-      console.error('❌ Failed to add deposit product to cart:', error);
+      console.error('[ERROR] Failed to add deposit product to cart:', error);
       alert('Failed to add deposit to cart. Please try again.');
     }
   }
