@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const quantities = variantMetafields.quantities;
         
         if (quantities.injectors > 0) {
-          mainProperties['Injectors'] = `${quantities.injectors} units`;
+          mainProperties['Injectors'] = `${quantities.injectors}`;
           depositProperties['Injectors'] = '$100 per unit';
         }
         if (quantities.fuel_pumps > 0) {
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
           depositProperties['High Pressure Fuel Pumps'] = '$200 per unit';
         }
         if (quantities.fuel_lines > 0) {
-          mainProperties['Fuel Lines'] = `${quantities.fuel_lines} pieces`;
+          mainProperties['Fuel Lines'] = `${quantities.fuel_lines}`;
           depositProperties['Fuel Lines'] = '$100 per set';
         }
       }
