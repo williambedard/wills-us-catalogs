@@ -276,12 +276,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Validate deposit selection before form submission
+  // Handle form submission with deposit products
   const productFormElements = document.querySelectorAll('product-form form[action*="/cart/add"]');
   
   productFormElements.forEach(form => {
     form.addEventListener('submit', function(e) {
-      // Only validate if deposit picker is present
+      // Only handle if deposit picker is present
       const depositPicker = document.querySelector('.deposit-variant-picker');
       if (!depositPicker) return; // No deposit picker, proceed normally
       
@@ -295,10 +295,84 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      // Let the theme handle cart addition normally
-      console.log('[NORMAL] Form validation passed, letting theme handle cart addition');
+      // If deposit is needed, handle the submission ourselves
+      if (selectedDepositOption !== 'return_cores_in_advance') {
+        e.preventDefault(); // Stop normal form submission
+        
+        const formData = new FormData(form);
+        const mainVariantId = formData.get('id');
+        const quantity = formData.get('quantity') || '1';
+        const selectedOptionElement = dropdown.querySelector('option:checked');
+        const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+        const depositAmount = calculateDepositAmount(mainVariantId);
+        
+        if (depositVariantId && depositAmount > 0) {
+          console.log('[CART] Adding main product + deposit to cart');
+          addBothToCart(mainVariantId, quantity, depositVariantId, depositAmount, selectedDepositOption);
+        } else {
+          console.log('[CART] No deposit needed, submitting form normally');
+          form.submit(); // Fallback to normal submission
+        }
+      }
+      
+      // For 'return_cores_in_advance', let form submit normally
     });
   });
+  
+  // Function to add both main product and deposit in single request
+  async function addBothToCart(mainVariantId, quantity, depositVariantId, depositAmount, depositOption) {
+    try {
+      const bundleId = Date.now().toString();
+      const depositQuantity = Math.ceil(depositAmount / 100);
+      
+      const items = [
+        {
+          id: parseInt(mainVariantId),
+          quantity: parseInt(quantity),
+          properties: {
+            '_bundle_id': bundleId,
+            'deposit_option': depositOption
+          }
+        },
+        {
+          id: parseInt(depositVariantId), 
+          quantity: depositQuantity,
+          properties: {
+            '_deposit_for': 'main_product',
+            '_bundle_id': bundleId,
+            '_is_deposit_product': 'true',
+            'deposit_option': depositOption,
+            '_calculated_amount': '$' + depositAmount.toFixed(2)
+          }
+        }
+      ];
+      
+      console.log('[CART] Sending both items:', items);
+      
+      const response = await fetch(window.Shopify?.routes?.root + 'cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ items })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('[SUCCESS] Both products added:', result);
+      
+      // Redirect to cart (same as theme default behavior)
+      window.location.href = '/cart';
+      
+    } catch (error) {
+      console.error('[ERROR] Failed to add products:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
+  }
   
   // Function to calculate deposit amount from quantities only
   // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
