@@ -109,32 +109,31 @@ class CartItemsComponent extends Component {
    * @param {string} config.action - The action.
    */
   async updateQuantity(config) {
-    const cartPerformaceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
-
-    this.#disableCartItems();
-
     const { line, quantity } = config;
-    const { cartTotal } = this.refs;
-
-    const cartItemsComponents = document.querySelectorAll('cart-items-component');
-    const sectionsToUpdate = new Set([this.sectionId]);
-    cartItemsComponents.forEach((item) => {
-      if (item instanceof HTMLElement && item.dataset.sectionId) {
-        sectionsToUpdate.add(item.dataset.sectionId);
-      }
-    });
-
+    
     try {
-      // Get the cart item key for the line
+      // Get the cart item key for the line FIRST, before any other operations
       const cartResponse = await fetch('/cart.js');
       const cart = await cartResponse.json();
       const cartItem = cart.items[line - 1]; // line is 1-indexed, array is 0-indexed
       
       if (!cartItem) {
-        console.error('Cart item not found for line:', line);
-        this.#enableCartItems();
+        console.error('Cart item not found for line:', line, 'Cart has', cart.items.length, 'items');
         return;
       }
+
+      const cartPerformaceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
+      this.#disableCartItems();
+      
+      const { cartTotal } = this.refs;
+
+      const cartItemsComponents = document.querySelectorAll('cart-items-component');
+      const sectionsToUpdate = new Set([this.sectionId]);
+      cartItemsComponents.forEach((item) => {
+        if (item instanceof HTMLElement && item.dataset.sectionId) {
+          sectionsToUpdate.add(item.dataset.sectionId);
+        }
+      });
 
       const updates = {};
       updates[cartItem.key] = quantity;
