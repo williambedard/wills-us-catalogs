@@ -142,7 +142,15 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // Function to add deposit product to cart using Shopify's AJAX Cart API
   async function addDepositToCart(depositVariantId, quantity, bundleId, totalAmount, depositOption) {
     try {
-      const response = await fetch(window.Theme?.routes?.cart_add_url || '/cart/add.js', {
+      console.log('[DEPOSIT] Attempting to add deposit:', {
+        variantId: depositVariantId,
+        quantity: quantity,
+        bundleId: bundleId,
+        totalAmount: totalAmount,
+        depositOption: depositOption
+      });
+
+      const response = await originalFetch(window.Shopify?.routes?.root + 'cart/add.js', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,19 +161,20 @@ Uses JSON string parsing for reliable MONEY metafield extraction
             id: parseInt(depositVariantId),
             quantity: quantity,
             properties: {
-              '_display_price': '$' + totalAmount.toFixed(2),
-              'bundle_id': bundleId,
-              '_is_deposit': 'true',
+              '_deposit_for': 'main_product',
+              '_bundle_id': bundleId,
+              '_is_deposit_product': 'true',
               'deposit_option': depositOption,
-              '_deposit_breakdown': quantity + ' x $100.00'
+              '_calculated_amount': '$' + totalAmount.toFixed(2),
+              '_unit_breakdown': quantity + ' units x $100.00 each'
             }
-          }]),
-          sections: 'cart-items,cart-icon-bubble,cart-live-region-text,cart-footer'
+          }]
         })
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
       const result = await response.json();
@@ -174,10 +183,17 @@ Uses JSON string parsing for reliable MONEY metafield extraction
         quantity: quantity,
         totalAmount: totalAmount,
         bundleId: bundleId,
-        response: result
+        addedItems: result.items
       });
       
-      // The theme will automatically dispatch cart update events for UI updates
+      // Trigger theme's cart update events manually if needed
+      document.dispatchEvent(new CustomEvent('cart:update', {
+        detail: {
+          source: 'deposit-picker',
+          depositAdded: true,
+          bundleId: bundleId
+        }
+      }));
       
     } catch (error) {
       console.error('[ERROR] Failed to add deposit product to cart:', error);
