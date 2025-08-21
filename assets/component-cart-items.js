@@ -298,33 +298,8 @@ class CartItemsComponent extends Component {
           const requiredDepositQuantity = Math.ceil(totalDepositAmount / 100);
           
           if (deposit.item.quantity !== requiredDepositQuantity) {
-            // Update deposit quantity to match calculated amount (including removal if main qty = 0)
-            const updates = {};
-            updates[deposit.key] = requiredDepositQuantity;
-            
-            const body = JSON.stringify({
-              updates: updates,
-              sections: this.sectionId,
-              sections_url: window.location.pathname,
-            });
-            
-            const changeResponse = await fetch('/cart/update.js', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-              },
-              body: body
-            });
-            
-            if (changeResponse.ok) {
-              // Re-render this section to reflect the change
-              const responseText = await changeResponse.text();
-              const parsedResponse = JSON.parse(responseText);
-              if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
-                morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
-              }
-            }
+            // Update deposit quantity and recalculate component properties
+            await this.#updateDepositLineItem(deposit, main, requiredDepositQuantity);
           }
         } else if (!main && deposit) {
           // Remove orphaned deposit product
