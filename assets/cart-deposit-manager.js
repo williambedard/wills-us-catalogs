@@ -185,20 +185,9 @@ class CartDepositManager extends Component {
    * @param {Array} mainProductItems 
    */
   async #addMissingDeposits(depositItems, mainProductItems) {
-    for (const mainItem of mainProductItems) {
-      // Check if this main product should have a deposit
-      const shouldHaveDeposit = this.#shouldMainProductHaveDeposit(mainItem);
-      
-      if (shouldHaveDeposit) {
-        // Check if deposit already exists
-        const existingDeposit = this.#findDepositForMainProduct(depositItems, mainItem);
-        
-        if (!existingDeposit) {
-          // Add missing deposit
-          await this.#addMissingDepositForMainProduct(mainItem);
-        }
-      }
-    }
+    // Disabled: Missing deposits are now handled by the PDP logic
+    // This prevents duplicate deposits and ensures proper metafield calculation
+    console.log('Missing deposit check disabled - handled by PDP');
   }
 
   /**
