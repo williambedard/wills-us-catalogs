@@ -142,6 +142,7 @@ class CartDepositManager extends Component {
         const requiredDepositQuantity = this.#calculateRequiredDepositQuantity(depositItem, linkedMain);
         
         if (depositItem.quantity !== requiredDepositQuantity) {
+          console.log(`Updating deposit item ${depositItem.id}, key: ${depositItem.key}, from qty ${depositItem.quantity} to ${requiredDepositQuantity}`);
           updates[depositItem.key] = requiredDepositQuantity;
           needsUpdate = true;
         }
@@ -300,6 +301,7 @@ class CartDepositManager extends Component {
    */
   async #updateCartItems(updates) {
     try {
+      console.log('Sending cart update with:', { updates });
       const response = await fetch(window.Theme.routes.cart_update_url, {
         method: 'POST',
         headers: { 
