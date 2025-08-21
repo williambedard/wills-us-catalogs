@@ -169,7 +169,7 @@ class CartDepositManager extends Component {
         // Remove orphaned deposit
         updates[depositItem.key] = 0;
         needsUpdate = true;
-        console.log(`Removing orphaned deposit: ${depositItem.id}`);
+        // Remove orphaned deposit (silent)
       }
     }
     
