@@ -56,19 +56,12 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
     {% comment %}DEBUG: Log what variant we're processing{% endcomment %}
-    {% comment %}Extract quantity values and calculate totals using unit prices{% endcomment %}
+    {% comment %}Extract only quantity values - calculations done in JavaScript{% endcomment %}
     {% assign num_inj = variant.metafields.custom.number_of_injectors.value | default: 0 %}
     {% assign num_fl = variant.metafields.custom.number_of_fuel_lines.value | default: 0 %}
     {% assign num_fp = variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | default: 0 %}
     
-    {% assign inj_total = num_inj | times: 10000 %}
-    {% assign fl_total = num_fl | times: 10000 %}
-    {% assign fp_total = num_fp | times: 20000 %}
-    
     window.productMetafields["{{ variant.id }}"] = {
-      "fuel_pump_deposit": {{ fp_total | divided_by: 100.0 }},
-      "injector_deposit": {{ inj_total | divided_by: 100.0 }},
-      "fuel_line_deposit": {{ fl_total | divided_by: 100.0 }},
       "quantities": {
         "injectors": {{ num_inj }},
         "fuel_lines": {{ num_fl }},
