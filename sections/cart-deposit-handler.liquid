@@ -35,22 +35,35 @@
       productId: '{{ deposit_product.id }}',
       variants: {
         creditCard: {
-          id: '{{ credit_card_variant.id }}',
-          title: '{{ credit_card_variant.title }}',
-          price: {{ credit_card_variant.price | money_without_currency | remove: ',' }}
+          id: '{{ credit_card_variant.id | default: "" }}',
+          title: '{{ credit_card_variant.title | default: "" }}',
+          price: {{ credit_card_variant.price | money_without_currency | remove: ',' | default: 0 }}
         },
         payDeposit: {
-          id: '{{ pay_deposit_variant.id }}',
-          title: '{{ pay_deposit_variant.title }}',
-          price: {{ pay_deposit_variant.price | money_without_currency | remove: ',' }}
+          id: '{{ pay_deposit_variant.id | default: "" }}',
+          title: '{{ pay_deposit_variant.title | default: "" }}',
+          price: {{ pay_deposit_variant.price | money_without_currency | remove: ',' | default: 0 }}
         },
         returnFirst: {
-          id: '{{ return_first_variant.id }}',
-          title: '{{ return_first_variant.title }}',
-          price: {{ return_first_variant.price | money_without_currency | remove: ',' }}
+          id: '{{ return_first_variant.id | default: "" }}',
+          title: '{{ return_first_variant.title | default: "" }}',
+          price: {{ return_first_variant.price | money_without_currency | remove: ',' | default: 0 }}
         }
       }
     });
+  {% else %}
+    // Deposit product not found - create empty config
+    window.depositProductConfig = window.depositProductConfig || {};
+    Object.assign(window.depositProductConfig, {
+      handle: 'refundable-core-deposit',
+      productId: '',
+      variants: {
+        creditCard: { id: '', title: '', price: 0 },
+        payDeposit: { id: '', title: '', price: 0 },
+        returnFirst: { id: '', title: '', price: 0 }
+      }
+    });
+    console.warn('Deposit product "refundable-core-deposit" not found');
   {% endif %}
 </script>
 
