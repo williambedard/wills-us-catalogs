@@ -257,19 +257,19 @@
                             {%- if cart_item.variant.metafields.custom.number_of_injectors.value and cart_item.variant.metafields.custom.number_of_injectors.value > 0 -%}
                               <div class="cart-items__properties">
                                 <dt>Injectors:</dt>
-                                <dd>${{ cart_item.variant.metafields.custom.number_of_injectors.value | times: 100 }} ($100 per unit)</dd>
+                                <dd>$100 per unit</dd>
                               </div>
                             {%- endif -%}
                             {%- if cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
                               <div class="cart-items__properties">
                                 <dt>High Pressure Fuel Pumps:</dt>
-                                <dd>${{ cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | times: 200 }} ($200 per unit)</dd>
+                                <dd>$200 per unit</dd>
                               </div>
                             {%- endif -%}
                             {%- if cart_item.variant.metafields.custom.number_of_fuel_lines.value and cart_item.variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
                               <div class="cart-items__properties">
                                 <dt>Fuel Lines:</dt>
-                                <dd>${{ cart_item.variant.metafields.custom.number_of_fuel_lines.value | times: 100 }} ($100 per set)</dd>
+                                <dd>$100 per set</dd>
                               </div>
                             {%- endif -%}
                             {%- break -%}
