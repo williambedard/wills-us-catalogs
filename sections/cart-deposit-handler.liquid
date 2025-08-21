@@ -68,6 +68,23 @@
     
     // DEBUG: Final deposit product config
     console.log('💰 Deposit product config loaded:', window.depositProductConfig);
+    
+    // DEBUG: Log cart items and their properties on cart page
+    fetch('/cart.js')
+      .then(response => response.json())
+      .then(cart => {
+        console.log('📦 CART ITEMS WITH PROPERTIES:');
+        cart.items.forEach((item, index) => {
+          console.log(`[CART-ITEM-${index + 1}] ${item.product_title} (${item.variant_title || 'Default'}):`, {
+            variant_id: item.variant_id,
+            quantity: item.quantity,
+            properties: item.properties || {},
+            key: item.key,
+            price: item.price
+          });
+        });
+      })
+      .catch(err => console.error('Failed to fetch cart:', err));
   {% else %}
     // Deposit product not found - create empty config
     console.error('❌ Deposit product "refundable-core-deposit" not found in store');
