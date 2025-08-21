@@ -193,7 +193,7 @@
                         assign is_main_product = false
                         
                         for prop in item.properties
-                          if prop.first == '_is_deposit' and prop.last == 'true'
+                          if prop.first == '_is_deposit_product' and prop.last == 'true'
                             assign is_deposit_product = true
                           elsif prop.first == 'deposit_option'
                             assign is_main_product = true
@@ -208,7 +208,7 @@
                         {%- assign display_value = property.last -%}
                         
                         {%- if property.last != blank -%}
-                          {%- if property.first == 'bundle_id' -%}
+                          {%- if property.first == '_bundle_id' -%}
                             {%- comment -%} Always show bundle_id for both product types {%- endcomment -%}
                             {%- assign show_property = true -%}
                             {%- assign display_key = 'Bundle ID' -%}
