@@ -73,6 +73,11 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // DEBUG: Log all metafields data (quantities only)
   console.log('Product metafields loaded:', window.productMetafields);
   
+  // DEBUG: Test that theme's cart events are working after cleanup
+  document.addEventListener('cart:update', function(event) {
+    console.log('✅ Theme cart event working:', event.detail);
+  });
+  
   // Function to update deposit amounts when variant changes
   function updateDepositAmountsForVariant(variantId) {
     const depositAmount = calculateDepositAmount(variantId);
