@@ -187,21 +187,100 @@
                         {%- endfor -%}
                       {%- endif -%}
 
+                      {%- liquid
+                        # Custom property display logic based on product type
+                        assign is_deposit_product = false
+                        assign is_main_product = false
+                        
+                        for prop in item.properties
+                          if prop.first == '_is_deposit' and prop.last == 'true'
+                            assign is_deposit_product = true
+                          elsif prop.first == 'deposit_option'
+                            assign is_main_product = true
+                          endif
+                        endfor
+                      -%}
+                      
                       {%- for property in item.properties -%}
                         {%- assign property_first_char = property.first | slice: 0 -%}
-                        {%- if property.last != blank and property_first_char != '_' -%}
+                        {%- assign show_property = false -%}
+                        {%- assign display_key = property.first -%}
+                        {%- assign display_value = property.last -%}
+                        
+                        {%- if property.last != blank -%}
+                          {%- if property.first == 'bundle_id' -%}
+                            {%- comment -%} Always show bundle_id for both product types {%- endcomment -%}
+                            {%- assign show_property = true -%}
+                            {%- assign display_key = 'Bundle ID' -%}
+                            
+                          {%- elsif property.first == 'deposit_option' -%}
+                            {%- if is_main_product -%}
+                              {%- comment -%} Show friendly deposit option name for main products {%- endcomment -%}
+                              {%- assign show_property = true -%}
+                              {%- assign display_key = 'Deposit Payment' -%}
+                              {%- if property.last == 'credit_card_on_file' -%}
+                                {%- assign display_value = 'Credit Card on File' -%}
+                              {%- elsif property.last == 'pay_core_deposit' -%}
+                                {%- assign display_value = 'Pay Core Deposit' -%}
+                              {%- elsif property.last == 'return_cores_in_advance' -%}
+                                {%- assign display_value = 'Return Cores in Advance' -%}
+                              {%- endif -%}
+                            {%- endif -%}
+                            {%- comment -%} Hide deposit_option for deposit products {%- endcomment -%}
+                            
+                          {%- elsif property_first_char != '_' -%}
+                            {%- comment -%} Show other non-underscore properties {%- endcomment -%}
+                            {%- assign show_property = true -%}
+                          {%- endif -%}
+                        {%- endif -%}
+                        
+                        {%- if show_property -%}
                           <div class="cart-items__properties">
-                            <dt>{{ property.first }}:</dt>
+                            <dt>{{ display_key }}:</dt>
                             <dd>
-                              {%- if property.last contains '/uploads/' -%}
-                                <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
+                              {%- if display_value contains '/uploads/' -%}
+                                <a href="{{ display_value }}">{{ display_value | split: '/' | last }}</a>
                               {%- else -%}
-                                {{ property.last }}
+                                {{ display_value }}
                               {%- endif -%}
                             </dd>
                           </div>
                         {%- endif -%}
                       {%- endfor -%}
+                      
+                      {%- if is_main_product -%}
+                        {%- comment -%} Show variant metafields for main products {%- endcomment -%}
+                        {%- if item.variant.metafields.custom.number_of_injectors -%}
+                          <div class="cart-items__properties">
+                            <dt>Injectors:</dt>
+                            <dd>{{ item.variant.metafields.custom.number_of_injectors.value }} units</dd>
+                          </div>
+                        {%- endif -%}
+                        {%- if item.variant.metafields.custom.number_of_fuel_lines -%}
+                          <div class="cart-items__properties">
+                            <dt>Fuel Lines:</dt>
+                            <dd>{{ item.variant.metafields.custom.number_of_fuel_lines.value }} pieces</dd>
+                          </div>
+                        {%- endif -%}
+                        {%- if item.variant.metafields.custom.number_of_high_pressure_fuel_pumps -%}
+                          <div class="cart-items__properties">
+                            <dt>High Pressure Fuel Pumps:</dt>
+                            <dd>{{ item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value }} units</dd>
+                          </div>
+                        {%- endif -%}
+                      {%- endif -%}
+                      
+                      {%- if is_deposit_product -%}
+                        {%- comment -%} Show deposit pricing logic for deposit products {%- endcomment -%}
+                        <div class="cart-items__deposit-breakdown">
+                          <dt style="font-weight: bold; margin-top: 8px;">Deposit Breakdown:</dt>
+                          <div style="margin-left: 12px; font-size: 0.9em; color: #666;">
+                            <div>• Injectors: $100 per unit</div>
+                            <div>• High Pressure Fuel Pumps: $200 per unit</div>
+                            <div>• Fuel Lines: $100 per set</div>
+                          </div>
+                        </div>
+                      {%- endif -%}
                     </dl>
 
                     {% if item.selling_plan_allocation %}
