@@ -112,29 +112,7 @@ class CartItemsComponent extends Component {
     const { line, quantity } = config;
     
     try {
-      // Get fresh cart data to ensure we have the correct item keys
-      const cartResponse = await fetch('/cart.js');
-      if (!cartResponse.ok) {
-        throw new Error(`Failed to fetch cart: ${cartResponse.status}`);
-      }
-      const cart = await cartResponse.json();
-      
-      // Find the cart item by line number (1-indexed)
-      const cartItem = cart.items[line - 1]; // line is 1-indexed, array is 0-indexed
-      
-      if (!cartItem) {
-        console.error('Cart item not found for line:', line, 'Available items:', cart.items.length);
-        console.error('Cart items:', cart.items.map((item, idx) => ({
-          index: idx + 1,
-          key: item.key,
-          title: item.product?.title || 'Unknown'
-        })));
-        return;
-      }
-
-      console.log(`Updating line ${line} (key: ${cartItem.key}) to quantity ${quantity}`);
-
-      const cartPerformaceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
+      const cartPerformanceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
       this.#disableCartItems();
       
       const { cartTotal } = this.refs;
@@ -147,31 +125,23 @@ class CartItemsComponent extends Component {
         }
       });
 
-      const updates = {};
-      updates[cartItem.key] = quantity;
-
+      // Use line-based update instead of key-based
       const body = JSON.stringify({
-        updates: updates,
+        line: line,
+        quantity: quantity,
         sections: Array.from(sectionsToUpdate).join(','),
         sections_url: window.location.pathname,
       });
 
       cartTotal?.shimmer();
 
-      const response = await fetch(`${Theme.routes.cart_update_url}`, fetchConfig('json', { body }));
+      const response = await fetch(`${Theme.routes.cart_change_url}`, fetchConfig('json', { body }));
       const responseText = await response.text();
-      
-      if (!response.ok) {
-        console.error('Cart update failed:', response.status, responseText);
-        throw new Error(`Cart update failed: ${response.status} - ${responseText}`);
-      }
-      
       const parsedResponseText = JSON.parse(responseText);
 
       resetShimmer(this);
 
       if (parsedResponseText.errors) {
-        console.error('Cart update errors:', parsedResponseText.errors);
         this.#handleCartError(line, parsedResponseText);
         return;
       }
