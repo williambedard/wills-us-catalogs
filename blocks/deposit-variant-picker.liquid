@@ -271,6 +271,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calculate deposit quantity: total deposit amount divided by $100 unit price
             const depositQuantity = Math.ceil(depositAmount / 100) * quantity;
             
+            // Get component quantities from metafields for display
+            const variantMetafields = window.productMetafields?.[mainVariantId];
+            const componentProps = {
+              'bundle_id': bundleId,
+              '_is_deposit': 'true',
+              '_deposit_unit_amount': depositAmount.toFixed(2),
+              '_main_product_quantity': quantity
+            };
+            
+            // Add component quantities as visible properties (multiplied by main product quantity)
+            if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
+              componentProps['Injectors'] = (variantMetafields.injector_quantity * quantity) + ' @ $100 each';
+            }
+            if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
+              componentProps['Fuel Pumps'] = (variantMetafields.fuel_pump_quantity * quantity) + ' @ $200 each';
+            }
+            if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
+              componentProps['Fuel Lines'] = (variantMetafields.fuel_line_quantity * quantity) + ' @ $100 each';
+            }
+            
             const depositResponse = await fetch('/cart/add.js', {
               method: 'POST',
               headers: {
@@ -281,12 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 items: [{
                   id: parseInt(depositVariantId),
                   quantity: depositQuantity,
-                  properties: {
-                    'bundle_id': bundleId,
-                    '_is_deposit': 'true',
-                    '_deposit_unit_amount': depositAmount.toFixed(2),
-                    '_main_product_quantity': quantity
-                  }
+                  properties: componentProps
                 }]
               })
             });
