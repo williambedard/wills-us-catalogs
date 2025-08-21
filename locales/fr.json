@@ -238,7 +238,10 @@
     "recipient_form_message": "Message (facultatif)",
     "recipient_form_characters_used": "{{ used_chars }}/{{ max_chars }} caractères utilisés",
     "recipient_form_send_on": "JJ-MM-AAAA",
-    "recipient_form_send_on_label": "Envoyer le (facultatif)"
+    "recipient_form_send_on_label": "Envoyer le (facultatif)",
+    "recipient_form_fields_visible": "Les champs du formulaire du destinataire sont désormais visibles",
+    "recipient_form_fields_hidden": "Les champs du formulaire du destinataire sont désormais masqués",
+    "recipient_form_error": "Une erreur s'est produite lors de la soumission du formulaire"
   },
   "gift_cards": {
     "issued": {
@@ -292,6 +295,13 @@
       "post": "Publier le commentaire",
       "success_moderated": "Commentaire publié, en attente de modération",
       "success": "Commentaire publié"
+    }
+  },
+  "shopify": {
+    "checkout": {
+      "merchant_instruction_errors": {
+        "invalid_entrypoint_for_remote_negotiation": "L'instruction de négociation à distance ne peut pas être fournie à une session de négociation non distante."
+      }
     }
   }
 }

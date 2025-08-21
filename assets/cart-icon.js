@@ -62,6 +62,29 @@ class CartIcon extends Component {
     );
   };
 
+  /**
+   * Checks if the cart count is correct.
+   */
+  ensureCartBubbleIsCorrect = () => {
+    const sessionStorageCount = sessionStorage.getItem('cart-count');
+    const visibleCount = this.refs.cartBubbleCount.textContent;
+
+    if (sessionStorageCount === visibleCount || sessionStorageCount === null) return;
+
+    try {
+      const { value, timestamp } = JSON.parse(sessionStorageCount);
+
+      if (Date.now() - timestamp < 10000) {
+        const count = parseInt(value, 10);
+
+        if (count >= 0) {
+          this.renderCartBubble(count, false, false);
+        }
+      }
+    } catch (_) {
+      // no-op
+    }
+  };
 }
 
 if (!customElements.get('cart-icon')) {
