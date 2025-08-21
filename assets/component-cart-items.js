@@ -126,50 +126,22 @@ class CartItemsComponent extends Component {
         }
       });
 
-      // First, get current cart to validate line number
-      const cartResponse = await fetch('/cart.js');
-      const cart = await cartResponse.json();
-      
-      console.log('Current cart has', cart.items.length, 'items');
-      console.log('Cart items:', cart.items.map((item, idx) => ({
-        line: idx + 1,
-        key: item.key,
-        title: item.product?.title || 'Unknown',
-        quantity: item.quantity
-      })));
-      console.log('Trying to update line:', line, 'to quantity:', quantity);
-      
-      const lineNum = parseInt(line, 10);
-      if (lineNum < 1 || lineNum > cart.items.length) {
-        console.error(`Invalid line number ${lineNum}. Cart has ${cart.items.length} items.`);
-        console.error('Available lines:', cart.items.map((item, idx) => idx + 1));
-        return;
-      }
-
-      // Use line-based update - ensure line is an integer
       const body = JSON.stringify({
-        line: lineNum,
+        line: parseInt(line, 10),
         quantity: parseInt(quantity, 10),
         sections: Array.from(sectionsToUpdate).join(','),
         sections_url: window.location.pathname,
       });
 
-      console.log('Cart change request body:', body);
-
       cartTotal?.shimmer();
 
-      const response = await fetch(`${Theme.routes.cart_change_url}`, fetchConfig('json', { body }));
+      const response = await fetch('/cart/change.js', fetchConfig('json', { body }));
       const responseText = await response.text();
-      
-      console.log('Cart change response status:', response.status);
-      console.log('Cart change response:', responseText);
-      
       const parsedResponseText = JSON.parse(responseText);
 
       resetShimmer(this);
 
       if (parsedResponseText.errors) {
-        console.error('Cart change errors:', parsedResponseText.errors);
         this.#handleCartError(line, parsedResponseText);
         return;
       }

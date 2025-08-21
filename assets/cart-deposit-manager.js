@@ -86,10 +86,6 @@ class CartDepositManager extends Component {
       clearTimeout(this.#validationTimeout);
     }
     
-    // TEMPORARILY DISABLED FOR DEBUGGING
-    console.log('Deposit validation scheduled but DISABLED for debugging');
-    return;
-    
     this.#validationTimeout = setTimeout(() => {
       this.#validateDepositConsistency();
     }, delay);
