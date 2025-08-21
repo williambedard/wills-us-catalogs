@@ -25,23 +25,14 @@
 
   {% assign deposit_product = all_products['refundable-core-deposit'] %}
   {% if deposit_product %}
-    // DEBUG: Deposit product found
-    console.log('✅ Deposit product found:', '{{ deposit_product.title }}', 'ID:', '{{ deposit_product.id }}');
+    // Deposit product found
     {% assign credit_card_variant = deposit_product.variants | where: 'title', 'Credit Card on File' | first %}
     {% assign pay_deposit_variant = deposit_product.variants | where: 'title', 'Pay Core Deposit' | first %}
     {% assign return_first_variant = deposit_product.variants | where: 'title', 'Return Cores in Advance' | first %}
     
-    // DEBUG: Check which variants were found
-    console.log('Deposit variants found:', {
-      creditCard: '{{ credit_card_variant.title | default: "NOT FOUND" }}',
-      payDeposit: '{{ pay_deposit_variant.title | default: "NOT FOUND" }}', 
-      returnFirst: '{{ return_first_variant.title | default: "NOT FOUND" }}'
-    });
+    // Check which variants were found
     
-    // DEBUG: Show all available variant titles for reference
-    console.log('All available variant titles:', [
-      {% for variant in deposit_product.variants %}'{{ variant.title }}'{% unless forloop.last %},{% endunless %}{% endfor %}
-    ]);
+    // Available variant titles for reference
     
     window.depositProductConfig = window.depositProductConfig || {};
     Object.assign(window.depositProductConfig, {
@@ -66,28 +57,11 @@
       }
     });
     
-    // DEBUG: Final deposit product config
-    console.log('💰 Deposit product config loaded:', window.depositProductConfig);
+    // Deposit product config loaded
     
-    // DEBUG: Log cart items and their properties on cart page
-    fetch('/cart.js')
-      .then(response => response.json())
-      .then(cart => {
-        console.log('📦 CART ITEMS WITH PROPERTIES:');
-        cart.items.forEach((item, index) => {
-          console.log(`[CART-ITEM-${index + 1}] ${item.product_title} (${item.variant_title || 'Default'}):`, {
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            properties: item.properties || {},
-            key: item.key,
-            price: item.price
-          });
-        });
-      })
-      .catch(err => console.error('Failed to fetch cart:', err));
   {% else %}
     // Deposit product not found - create empty config
-    console.error('❌ Deposit product "refundable-core-deposit" not found in store');
+    console.error('Deposit product "refundable-core-deposit" not found in store');
     window.depositProductConfig = window.depositProductConfig || {};
     Object.assign(window.depositProductConfig, {
       handle: 'refundable-core-deposit',
