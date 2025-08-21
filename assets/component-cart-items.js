@@ -166,8 +166,10 @@ class CartItemsComponent extends Component {
 
         morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
 
-        // Sync bundle quantities after successful cart update
-        this.#syncBundleQuantities();
+        // Sync bundle quantities after successful cart update (with small delay to ensure cart state is consistent)
+        setTimeout(() => {
+          this.#syncBundleQuantities();
+        }, 100);
       })
       .catch((error) => {
         console.error('Cart update failed:', error);
@@ -352,7 +354,7 @@ class CartItemsComponent extends Component {
               morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
             }
           } else {
-            console.error('Failed to update deposit quantity:', await changeResponse.text());
+            console.error('Failed to remove orphaned deposit:', await changeResponse.text());
           }
         }
       }
