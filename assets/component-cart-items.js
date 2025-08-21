@@ -272,16 +272,16 @@ class CartItemsComponent extends Component {
       // Group items by bundle_id
       const bundles = {};
       cart.items.forEach((item, index) => {
-        const bundleId = item.properties?.bundle_id;
+        const bundleId = item.properties?._bundle_id;
         if (bundleId) {
           if (!bundles[bundleId]) {
             bundles[bundleId] = { main: null, deposit: null };
           }
           
-          // Determine if this is main or deposit product based on deposit_option or is_deposit property
-          if (item.properties?.deposit_option) {
+          // Determine if this is main or deposit product based on deposit_option or _is_deposit_product property
+          if (item.properties?.deposit_option && item.properties?._is_deposit_product !== 'true') {
             bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
-          } else if (item.properties?._is_deposit === 'true') {
+          } else if (item.properties?._is_deposit_product === 'true') {
             bundles[bundleId].deposit = { item, lineNumber: index + 1 };
           }
         }
