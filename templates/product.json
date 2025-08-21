@@ -189,7 +189,7 @@
               "type": "deposit-variant-picker",
               "name": "Deposit Variant Picker",
               "settings": {
-                "deposit_product": "refundable-core-deposit",
+                "deposit_product": "credit-card-on-file-deposit-option",
                 "show_title": true,
                 "deposit_title": "Core Deposit Required",
                 "show_amount": true,
