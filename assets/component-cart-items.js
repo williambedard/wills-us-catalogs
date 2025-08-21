@@ -108,93 +108,74 @@ class CartItemsComponent extends Component {
    * @param {number} config.quantity - The quantity.
    * @param {string} config.action - The action.
    */
-  async updateQuantity(config) {
+  updateQuantity(config) {
+    const cartPerformaceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
+
+    this.#disableCartItems();
+
     const { line, quantity } = config;
-    let cartPerformanceUpdateMarker;
-    
-    try {
-      cartPerformanceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
-      this.#disableCartItems();
-      
-      const { cartTotal } = this.refs;
+    const { cartTotal } = this.refs;
 
-      const cartItemsComponents = document.querySelectorAll('cart-items-component');
-      const sectionsToUpdate = new Set([this.sectionId]);
-      cartItemsComponents.forEach((item) => {
-        if (item instanceof HTMLElement && item.dataset.sectionId) {
-          sectionsToUpdate.add(item.dataset.sectionId);
-        }
-      });
-
-      // Quick validation before making the request
-      const cartCheck = await fetch('/cart.js');
-      const currentCart = await cartCheck.json();
-      const lineNum = parseInt(line, 10);
-      
-      if (lineNum < 1 || lineNum > currentCart.items.length) {
-        console.error(`Line ${lineNum} invalid. Cart has ${currentCart.items.length} items`);
-        return;
+    const cartItemsComponents = document.querySelectorAll('cart-items-component');
+    const sectionsToUpdate = new Set([this.sectionId]);
+    cartItemsComponents.forEach((item) => {
+      if (item instanceof HTMLElement && item.dataset.sectionId) {
+        sectionsToUpdate.add(item.dataset.sectionId);
       }
+    });
 
-      const body = JSON.stringify({
-        line: lineNum,
-        quantity: parseInt(quantity, 10),
-        sections: Array.from(sectionsToUpdate).join(','),
-        sections_url: window.location.pathname,
-      });
+    const body = JSON.stringify({
+      line: line,
+      quantity: quantity,
+      sections: Array.from(sectionsToUpdate).join(','),
+      sections_url: window.location.pathname,
+    });
 
-      cartTotal?.shimmer();
+    cartTotal?.shimmer();
 
-      const response = await fetch('/cart/change.js', fetchConfig('json', { body }));
-      const responseText = await response.text();
-      
-      if (!response.ok) {
-        console.error(`Cart change failed: ${response.status}`);
-        console.error('Response:', responseText);
+    fetch(`${Theme.routes.cart_change_url}`, fetchConfig('json', { body }))
+      .then((response) => {
+        return response.text();
+      })
+      .then((responseText) => {
+        const parsedResponseText = JSON.parse(responseText);
+
         resetShimmer(this);
-        return;
-      }
-      
-      const parsedResponseText = JSON.parse(responseText);
 
-      resetShimmer(this);
+        if (parsedResponseText.errors) {
+          this.#handleCartError(line, parsedResponseText);
+          return;
+        }
 
-      if (parsedResponseText.errors) {
-        console.error('Cart errors:', parsedResponseText.errors);
-        this.#handleCartError(line, parsedResponseText);
-        return;
-      }
+        const newSectionHTML = new DOMParser().parseFromString(
+          parsedResponseText.sections[this.sectionId],
+          'text/html'
+        );
 
-      const newSectionHTML = new DOMParser().parseFromString(
-        parsedResponseText.sections[this.sectionId],
-        'text/html'
-      );
+        // Grab the new cart item count from a hidden element
+        const newCartHiddenItemCount = newSectionHTML.querySelector('[ref="cartItemCount"]')?.textContent;
+        const newCartItemCount = newCartHiddenItemCount ? parseInt(newCartHiddenItemCount, 10) : 0;
 
-      // Grab the new cart item count from a hidden element
-      const newCartHiddenItemCount = newSectionHTML.querySelector('[ref="cartItemCount"]')?.textContent;
-      const newCartItemCount = newCartHiddenItemCount ? parseInt(newCartHiddenItemCount, 10) : 0;
+        this.dispatchEvent(
+          new CartUpdateEvent({}, this.sectionId, {
+            itemCount: newCartItemCount,
+            source: 'cart-items-component',
+            sections: parsedResponseText.sections,
+          })
+        );
 
-      this.dispatchEvent(
-        new CartUpdateEvent({}, this.sectionId, {
-          itemCount: newCartItemCount,
-          source: 'cart-items-component',
-          sections: parsedResponseText.sections,
-        })
-      );
+        morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
 
-      morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
-
-      // Bundle quantity sync is now handled by cart-deposit-manager.js
-      // this.#syncBundleQuantities();
-      
-    } catch (error) {
-      console.error('Cart update error:', error);
-    } finally {
-      this.#enableCartItems();
-      if (cartPerformanceUpdateMarker) {
-        cartPerformance.measureFromMarker(cartPerformanceUpdateMarker);
-      }
-    }
+        // Sync bundle quantities after successful cart update
+        this.#syncBundleQuantities();
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        this.#enableCartItems();
+        cartPerformance.measureFromMarker(cartPerformaceUpdateMarker);
+      });
   }
 
   /**
@@ -276,12 +257,10 @@ class CartItemsComponent extends Component {
   }
 
   /**
-   * DISABLED: Bundle sync now handled by cart-deposit-manager.js
-   * This method was causing conflicts with the main deposit manager
+   * Syncs bundle quantities for deposit products.
+   * Finds products with matching bundle_id and syncs deposit quantities to match main products.
    */
   async #syncBundleQuantities() {
-    // Disabled - cart-deposit-manager.js handles all bundle sync logic
-    return;
     try {
       // Get current cart using Shopify AJAX Cart API
       const cartResponse = await fetch('/cart.js');
@@ -299,11 +278,11 @@ class CartItemsComponent extends Component {
             bundles[bundleId] = { main: null, deposit: null };
           }
           
-          // Determine if this is main or deposit product based on _deposit_option or _is_deposit property
-          if (item.properties?._deposit_option) {
-            bundles[bundleId].main = { item, key: item.key };
+          // Determine if this is main or deposit product based on deposit_option or is_deposit property
+          if (item.properties?.deposit_option) {
+            bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
           } else if (item.properties?._is_deposit === 'true') {
-            bundles[bundleId].deposit = { item, key: item.key };
+            bundles[bundleId].deposit = { item, lineNumber: index + 1 };
           }
         }
       });
@@ -313,32 +292,27 @@ class CartItemsComponent extends Component {
         const { main, deposit } = bundle;
         
         if (main && deposit) {
-          // Calculate required deposit quantity based on deposit amount and main product quantity
-          const depositUnitAmount = parseFloat(deposit.item.properties?._deposit_unit_amount || '0');
-          const totalDepositAmount = depositUnitAmount * main.item.quantity;
-          const requiredDepositQuantity = Math.ceil(totalDepositAmount / 100);
-          
-          if (deposit.item.quantity !== requiredDepositQuantity) {
-            // Update deposit quantity only - properties stay the same
-            const updates = {};
-            updates[deposit.key] = requiredDepositQuantity;
+          if (main.item.quantity !== deposit.item.quantity) {
+            // Update deposit quantity to match main product (including removal if main qty = 0)
+            const body = JSON.stringify({
+              line: deposit.lineNumber,
+              quantity: main.item.quantity,
+              sections: this.sectionId,
+              sections_url: window.location.pathname,
+            });
             
-            const updateResponse = await fetch('/cart/update.js', {
+            const changeResponse = await fetch('/cart/change.js', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
               },
-              body: JSON.stringify({
-                updates: updates,
-                sections: this.sectionId,
-                sections_url: window.location.pathname,
-              })
+              body: body
             });
-
-            if (updateResponse.ok) {
-              // Re-render this section to reflect changes
-              const responseText = await updateResponse.text();
+            
+            if (changeResponse.ok) {
+              // Re-render this section to reflect the change
+              const responseText = await changeResponse.text();
               const parsedResponse = JSON.parse(responseText);
               if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
                 morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
@@ -347,16 +321,14 @@ class CartItemsComponent extends Component {
           }
         } else if (!main && deposit) {
           // Remove orphaned deposit product
-          const updates = {};
-          updates[deposit.key] = 0;
-          
           const body = JSON.stringify({
-            updates: updates,
+            line: deposit.lineNumber,
+            quantity: 0,
             sections: this.sectionId,
             sections_url: window.location.pathname,
           });
           
-          const changeResponse = await fetch('/cart/update.js', {
+          const changeResponse = await fetch('/cart/change.js', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -379,7 +351,6 @@ class CartItemsComponent extends Component {
       console.error('Error syncing bundle quantities:', error);
     }
   }
-
 }
 
 if (!customElements.get('cart-items-component')) {

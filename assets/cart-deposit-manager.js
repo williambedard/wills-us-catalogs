@@ -81,7 +81,7 @@ class CartDepositManager extends Component {
    * Schedule validation to avoid excessive API calls
    * @param {number} delay - Delay in milliseconds
    */
-  #scheduleValidation(delay = 500) {
+  #scheduleValidation(delay = 100) {
     if (this.#validationTimeout) {
       clearTimeout(this.#validationTimeout);
     }
@@ -115,6 +115,9 @@ class CartDepositManager extends Component {
       // Remove orphaned deposits
       await this.#removeOrphanedDeposits(depositItems, mainProductItems);
       
+      // Add missing deposits for new main products
+      await this.#addMissingDeposits(depositItems, mainProductItems);
+      
     } catch (error) {
       console.error('Cart deposit validation error:', error);
     } finally {
@@ -135,12 +138,9 @@ class CartDepositManager extends Component {
       const linkedMain = this.#findLinkedMainProduct(mainProductItems, depositItem);
       
       if (linkedMain) {
-        // Calculate required deposit quantity based on deposit amount and main product quantity
-        const requiredDepositQuantity = this.#calculateRequiredDepositQuantity(depositItem, linkedMain);
-        
-        if (depositItem.quantity !== requiredDepositQuantity) {
-          console.log(`Updating deposit item ${depositItem.id}, key: ${depositItem.key}, from qty ${depositItem.quantity} to ${requiredDepositQuantity}`);
-          updates[depositItem.key] = requiredDepositQuantity;
+        // Deposit quantity should always be 1 regardless of main product quantity
+        if (depositItem.quantity !== 1) {
+          updates[depositItem.key] = 1;
           needsUpdate = true;
         }
       }
@@ -165,9 +165,9 @@ class CartDepositManager extends Component {
       
       if (!linkedMain) {
         // Remove orphaned deposit
-        console.warn(`Removing deposit ${depositItem.id} - no linked main product found with bundle_id: ${depositItem.properties?.bundle_id}`);
         updates[depositItem.key] = 0;
         needsUpdate = true;
+        console.log(`Removing orphaned deposit: ${depositItem.id}`);
       }
     }
     
@@ -182,8 +182,20 @@ class CartDepositManager extends Component {
    * @param {Array} mainProductItems 
    */
   async #addMissingDeposits(depositItems, mainProductItems) {
-    // Disabled: Missing deposits are now handled by the PDP logic
-    // This prevents duplicate deposits and ensures proper metafield calculation
+    for (const mainItem of mainProductItems) {
+      // Check if this main product should have a deposit
+      const shouldHaveDeposit = this.#shouldMainProductHaveDeposit(mainItem);
+      
+      if (shouldHaveDeposit) {
+        // Check if deposit already exists
+        const existingDeposit = this.#findDepositForMainProduct(depositItems, mainItem);
+        
+        if (!existingDeposit) {
+          // Add missing deposit
+          await this.#addMissingDepositForMainProduct(mainItem);
+        }
+      }
+    }
   }
 
   /**
@@ -194,10 +206,12 @@ class CartDepositManager extends Component {
   #shouldMainProductHaveDeposit(mainItem) {
     if (!mainItem.properties) return false;
     
-    const depositOption = mainItem.properties._deposit_option;
+    const paymentOption = mainItem.properties.payment_option;
+    const depositAmount = parseFloat(mainItem.properties.deposit_amount || '0');
     
-    return depositOption && 
-           depositOption !== 'return_cores_in_advance';
+    return paymentOption && 
+           paymentOption !== 'return_first' && 
+           depositAmount > 0;
   }
 
   /**
@@ -205,28 +219,65 @@ class CartDepositManager extends Component {
    * @param {object} mainItem 
    */
   async #addMissingDepositForMainProduct(mainItem) {
-    // Disabled: Missing deposits are now handled by the PDP logic
-    // This method was causing POST errors and is no longer needed
-  }
-
-  /**
-   * Calculate required deposit quantity based on deposit amount and main product quantity
-   * @param {object} depositItem 
-   * @param {object} mainItem 
-   * @returns {number}
-   */
-  #calculateRequiredDepositQuantity(depositItem, mainItem) {
-    // Get the deposit unit amount (per main product)
-    const depositUnitAmount = parseFloat(depositItem.properties?._deposit_unit_amount || '0');
-    const mainProductQuantity = mainItem.quantity;
-    
-    // Calculate total deposit amount needed
-    const totalDepositAmount = depositUnitAmount * mainProductQuantity;
-    
-    // Calculate deposit quantity: total amount divided by $100 unit price
-    const requiredDepositQuantity = Math.ceil(totalDepositAmount / 100);
-    
-    return Math.max(1, requiredDepositQuantity); // Ensure at least 1
+    try {
+      const depositConfig = window.depositProductConfig;
+      if (!depositConfig?.variants) {
+        console.error('Deposit product configuration not found');
+        return;
+      }
+      
+      const paymentOption = mainItem.properties.payment_option;
+      const depositAmount = mainItem.properties.deposit_amount;
+      
+      // Get the correct deposit variant
+      let variantId;
+      switch (paymentOption) {
+        case 'credit_card_on_file':
+          variantId = depositConfig.variants.creditCard.id;
+          break;
+        case 'pay_deposit':
+          variantId = depositConfig.variants.payDeposit.id;
+          break;
+        default:
+          return; // Invalid payment option
+      }
+      
+      const formData = new FormData();
+      formData.append('id', variantId);
+      formData.append('quantity', '1');
+      formData.append('properties[_deposit_product]', 'true');
+      formData.append('properties[payment_option]', paymentOption);
+      formData.append('properties[calculated_deposit_amount]', depositAmount);
+      formData.append('properties[main_product_variant]', mainItem.variant_id.toString());
+      
+      // Add component data if available
+      if (mainItem.properties.component_injectors) {
+        formData.append('properties[component_injectors]', mainItem.properties.component_injectors);
+      }
+      if (mainItem.properties.component_fuel_lines) {
+        formData.append('properties[component_fuel_lines]', mainItem.properties.component_fuel_lines);
+      }
+      if (mainItem.properties.component_fuel_pumps) {
+        formData.append('properties[component_fuel_pumps]', mainItem.properties.component_fuel_pumps);
+      }
+      
+      const response = await fetch(window.Theme.routes.cart_add_url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+      });
+      
+      if (response.ok) {
+        console.log(`Added missing deposit for main product: ${mainItem.id}`);
+        // Dispatch event to update cart UI
+        document.dispatchEvent(new CustomEvent('cart:change', {
+          detail: { source: 'deposit-manager' }
+        }));
+      }
+      
+    } catch (error) {
+      console.error('Failed to add missing deposit:', error);
+    }
   }
 
   /**
@@ -236,7 +287,7 @@ class CartDepositManager extends Component {
    */
   #findDepositItems(cartItems) {
     return cartItems.filter(item =>
-      item.properties && item.properties._is_deposit === 'true'
+      item.properties && item.properties._deposit_product === 'true'
     );
   }
 
@@ -247,7 +298,7 @@ class CartDepositManager extends Component {
    */
   #findMainProductItems(cartItems) {
     return cartItems.filter(item =>
-      !item.properties || item.properties._is_deposit !== 'true'
+      !item.properties || item.properties._deposit_product !== 'true'
     );
   }
 
@@ -258,23 +309,12 @@ class CartDepositManager extends Component {
    * @returns {object|null}
    */
   #findLinkedMainProduct(mainProductItems, depositItem) {
-    const bundleId = depositItem.properties?.bundle_id;
-    if (!bundleId) {
-      console.warn('Deposit item has no bundle_id:', depositItem.id);
-      return null;
-    }
+    const mainVariantId = depositItem.properties?.main_product_variant;
+    if (!mainVariantId) return null;
     
-    const linkedMain = mainProductItems.find(item => 
-      item.properties?.bundle_id === bundleId
+    return mainProductItems.find(item => 
+      item.variant_id.toString() === mainVariantId
     );
-    
-    if (!linkedMain) {
-      console.warn(`No main product found for bundle_id ${bundleId}. Available main products:`, 
-        mainProductItems.map(item => ({ id: item.id, bundle_id: item.properties?.bundle_id, _deposit_option: item.properties?._deposit_option }))
-      );
-    }
-    
-    return linkedMain;
   }
 
   /**
@@ -284,11 +324,8 @@ class CartDepositManager extends Component {
    * @returns {object|null}
    */
   #findDepositForMainProduct(depositItems, mainItem) {
-    const bundleId = mainItem.properties?.bundle_id;
-    if (!bundleId) return null;
-    
     return depositItems.find(deposit =>
-      deposit.properties?.bundle_id === bundleId
+      deposit.properties?.main_product_variant === mainItem.variant_id.toString()
     );
   }
 
@@ -298,7 +335,7 @@ class CartDepositManager extends Component {
    */
   async #updateCartItems(updates) {
     try {
-      const response = await fetch('/cart/update.js', {
+      const response = await fetch(window.Theme.routes.cart_update_url, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
