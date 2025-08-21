@@ -109,8 +109,8 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     const depositAmount = calculateDepositAmount(mainVariantId);
     const depositQuantity = Math.ceil(depositAmount / 100); // Each deposit variant = $100
     
-    // Generate unique bundle ID to link main and deposit products
-    const bundleId = Date.now().toString();
+    // Use the stored bundle ID from the main product form submission
+    const bundleId = window._currentBundleId || Date.now().toString();
     
     console.log('🔗 Adding deposit product to cart:', {
       depositVariantId,
@@ -403,6 +403,29 @@ document.addEventListener('DOMContentLoaded', function() {
           skipDeposit: selectedDepositOption === 'return_cores_in_advance'
         }
       });
+      
+      // Add bundle_id properties to main product if deposit is required
+      if (selectedDepositOption !== 'return_cores_in_advance') {
+        const bundleId = Date.now().toString();
+        
+        // Add bundle_id and deposit info to main product form
+        const bundleIdInput = document.createElement('input');
+        bundleIdInput.type = 'hidden';
+        bundleIdInput.name = 'properties[bundle_id]';
+        bundleIdInput.value = bundleId;
+        form.appendChild(bundleIdInput);
+        
+        const depositOptionInput = document.createElement('input');
+        depositOptionInput.type = 'hidden';
+        depositOptionInput.name = 'properties[deposit_option]';
+        depositOptionInput.value = selectedDepositOption;
+        form.appendChild(depositOptionInput);
+        
+        // Store bundle_id for the deposit addition later
+        window._currentBundleId = bundleId;
+        
+        console.log('🔗 Added bundle_id to main product:', bundleId);
+      }
       
       // Let the form submit normally - theme will handle cart addition
     });
