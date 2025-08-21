@@ -196,7 +196,7 @@ class CartDepositManager extends Component {
   #shouldMainProductHaveDeposit(mainItem) {
     if (!mainItem.properties) return false;
     
-    const depositOption = mainItem.properties.deposit_option;
+    const depositOption = mainItem.properties._deposit_option;
     
     return depositOption && 
            depositOption !== 'return_cores_in_advance';
