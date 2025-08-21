@@ -76,10 +76,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     };
   {% endfor %}
   
-  // DEBUG: Log all metafields data (quantities only)
-  console.log('Product metafields loaded:', window.productMetafields);
-  
-  console.log('[INIT] Deposit system loaded');
+  console.log('Deposit system loaded for product:', '{{ product.id }}');
   
   
   // Function to update deposit amounts when variant changes
@@ -228,12 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const selectedOptionElement = this.querySelector('option:checked');
       const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
       
-      // DEBUG: Log selected deposit variant
-      console.log('[DEPOSIT] Option selected:', {
-        option: selectedOption,
-        variantId: depositVariantId,
-        variantTitle: selectedOptionElement?.textContent?.trim()
-      });
       
       this.classList.remove('invalid-selection');
       
@@ -307,10 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const depositAmount = calculateDepositAmount(mainVariantId);
         
         if (depositVariantId && depositAmount > 0) {
-          console.log('[CART] Adding main product + deposit to cart');
           addBothToCart(mainVariantId, quantity, depositVariantId, depositAmount, selectedDepositOption);
         } else {
-          console.log('[CART] No deposit needed, submitting form normally');
           form.submit(); // Fallback to normal submission
         }
       }
