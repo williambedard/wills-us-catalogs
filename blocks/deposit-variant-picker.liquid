@@ -82,31 +82,48 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // Store original fetch function to intercept cart API calls
   const originalFetch = window.fetch;
   
+  // DEBUG: Log when our interceptor is loaded
+  console.log('[INIT] Deposit fetch interceptor loaded');
+  
   // Intercept fetch calls to detect when main products are added to cart
   window.fetch = function(...args) {
     const [resource, config] = args;
     
+    // DEBUG: Log all fetch calls to see what's happening
+    console.log('[FETCH] Intercepted fetch call:', resource, config?.method || 'GET');
+    
     // Check if this is a cart/add.js call
     if (resource && resource.includes('/cart/add.js')) {
+      console.log('[CART-ADD] Intercepting cart/add.js call!');
+      
       // Call original fetch and handle the response
       return originalFetch.apply(this, args)
         .then(response => {
+          console.log('[CART-ADD] Got response:', response.status, response.ok);
+          
           // Clone response so it can be used by both our code and the theme
           const responseClone = response.clone();
           
           // If successful, check if we need to add deposit
           if (response.ok) {
             responseClone.json().then(cartData => {
-              console.log('[CART-ADD] Detected successful cart/add.js call:', cartData);
+              console.log('[CART-ADD] Cart response data:', cartData);
               
               // Check if current product has deposit requirements
               const depositPicker = document.querySelector('.deposit-variant-picker');
               const dropdown = document.getElementById('deposit-variant-select');
               
+              console.log('[DEPOSIT-CHECK] Picker found:', !!depositPicker);
+              console.log('[DEPOSIT-CHECK] Dropdown found:', !!dropdown);
+              console.log('[DEPOSIT-CHECK] Dropdown value:', dropdown?.value);
+              
               if (depositPicker && dropdown && dropdown.value) {
                 const selectedOption = dropdown.value;
                 const selectedOptionElement = dropdown.querySelector('option:checked');
                 const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+                
+                console.log('[DEPOSIT-CHECK] Selected option:', selectedOption);
+                console.log('[DEPOSIT-CHECK] Deposit variant ID:', depositVariantId);
                 
                 // Only add deposit for non-return options
                 if (selectedOption !== 'return_cores_in_advance' && depositVariantId) {
@@ -116,15 +133,26 @@ Uses JSON string parsing for reliable MONEY metafield extraction
                     const variantId = addedItem.variant_id.toString();
                     const depositAmount = calculateDepositAmount(variantId);
                     
+                    console.log('[DEPOSIT-CHECK] Added item variant ID:', variantId);
+                    console.log('[DEPOSIT-CHECK] Calculated deposit amount:', depositAmount);
+                    
                     if (depositAmount > 0) {
-                      console.log('[DEPOSIT] Adding deposit product after main product added to cart');
+                      console.log('[DEPOSIT] TRIGGERING deposit addition!');
                       setTimeout(() => {
                         const bundleId = Date.now().toString();
                         addDepositToCart(depositVariantId, Math.ceil(depositAmount / 100), bundleId, depositAmount, selectedOption);
                       }, 200); // Small delay to ensure main product is processed
+                    } else {
+                      console.log('[DEPOSIT] No deposit needed - amount is 0');
                     }
+                  } else {
+                    console.log('[DEPOSIT] No items in cart response');
                   }
+                } else {
+                  console.log('[DEPOSIT] Skipping deposit addition - return option or missing variant ID');
                 }
+              } else {
+                console.log('[DEPOSIT] Missing requirements for deposit addition');
               }
             }).catch(err => {
               console.warn('[CART-ADD] Could not parse cart response:', err);
