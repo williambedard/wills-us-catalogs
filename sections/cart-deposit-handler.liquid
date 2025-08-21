@@ -65,8 +65,12 @@
         }
       }
     });
+    
+    // DEBUG: Final deposit product config
+    console.log('💰 Deposit product config loaded:', window.depositProductConfig);
   {% else %}
     // Deposit product not found - create empty config
+    console.error('❌ Deposit product "refundable-core-deposit" not found in store');
     window.depositProductConfig = window.depositProductConfig || {};
     Object.assign(window.depositProductConfig, {
       handle: 'refundable-core-deposit',
@@ -77,7 +81,6 @@
         returnFirst: { id: '', title: '', price: 0 }
       }
     });
-    console.warn('Deposit product "refundable-core-deposit" not found');
   {% endif %}
 </script>
 
