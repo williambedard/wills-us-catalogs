@@ -253,7 +253,7 @@
                       
                       {%- if item.properties._is_deposit_product -%}
                         {%- for cart_item in cart.items -%}
-                          {%- if cart_item.properties._bundle_id == item.properties._bundle_id and cart_item.properties.deposit_option -%}
+                          {%- if cart_item.properties._bundle_id == item.properties._bundle_id and cart_item.properties.deposit_option and cart_item.properties._is_deposit_product != 'true' -%}
                             {%- if cart_item.variant.metafields.custom.number_of_injectors.value and cart_item.variant.metafields.custom.number_of_injectors.value > 0 -%}
                               <div class="cart-items__properties">
                                 <dt>Injectors:</dt>
