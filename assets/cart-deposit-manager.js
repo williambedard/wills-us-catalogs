@@ -227,33 +227,31 @@ class CartDepositManager extends Component {
         return;
       }
       
-      const paymentOption = mainItem.properties.payment_option;
-      const depositAmount = mainItem.properties.deposit_amount;
+      const depositOption = mainItem.properties.deposit_option;
       
       // Get the correct deposit variant
       let variantId;
-      switch (paymentOption) {
+      switch (depositOption) {
         case 'credit_card_on_file':
           variantId = depositConfig.variants.creditCard.id;
           break;
-        case 'pay_deposit':
+        case 'pay_core_deposit':
           variantId = depositConfig.variants.payDeposit.id;
           break;
         default:
-          return; // Invalid payment option
+          return; // Invalid deposit option
       }
       
       const formData = new FormData();
       formData.append('id', variantId);
-      // Calculate initial deposit quantity based on deposit amount
-      const depositAmount = parseFloat(mainItem.properties.deposit_amount || '0');
-      const depositQuantity = Math.ceil(depositAmount / 100);
-      formData.append('quantity', depositQuantity.toString());
+      // This shouldn't happen since missing deposits are now handled by the PDP logic
+      // But if it does, we need to calculate deposit amount from the variant metafields
+      // For now, just add quantity 1 as a fallback
+      formData.append('quantity', '1');
       formData.append('properties[_is_deposit]', 'true');
       formData.append('properties[bundle_id]', mainItem.properties.bundle_id || '');
-      formData.append('properties[_deposit_unit_amount]', depositAmount);
+      formData.append('properties[_deposit_unit_amount]', '100'); // Fallback amount
       formData.append('properties[_main_product_quantity]', mainItem.quantity.toString());
-      formData.append('properties[main_product_variant]', mainItem.variant_id.toString());
       
       // Add component data if available
       if (mainItem.properties.component_injectors) {
