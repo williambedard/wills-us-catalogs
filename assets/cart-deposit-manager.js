@@ -138,10 +138,13 @@ class CartDepositManager extends Component {
       const linkedMain = this.#findLinkedMainProduct(mainProductItems, depositItem);
       
       if (linkedMain) {
-        // Deposit quantity should always be 1 regardless of main product quantity
-        if (depositItem.quantity !== 1) {
-          updates[depositItem.key] = 1;
+        // Calculate required deposit quantity based on deposit amount and main product quantity
+        const requiredDepositQuantity = this.#calculateRequiredDepositQuantity(depositItem, linkedMain);
+        
+        if (depositItem.quantity !== requiredDepositQuantity) {
+          updates[depositItem.key] = requiredDepositQuantity;
           needsUpdate = true;
+          console.log(`Syncing deposit quantity from ${depositItem.quantity} to ${requiredDepositQuantity} for main product quantity ${linkedMain.quantity}`);
         }
       }
     }
@@ -244,10 +247,14 @@ class CartDepositManager extends Component {
       
       const formData = new FormData();
       formData.append('id', variantId);
-      formData.append('quantity', '1');
-      formData.append('properties[_deposit_product]', 'true');
-      formData.append('properties[payment_option]', paymentOption);
-      formData.append('properties[calculated_deposit_amount]', depositAmount);
+      // Calculate initial deposit quantity based on deposit amount
+      const depositAmount = parseFloat(mainItem.properties.deposit_amount || '0');
+      const depositQuantity = Math.ceil(depositAmount / 100);
+      formData.append('quantity', depositQuantity.toString());
+      formData.append('properties[_is_deposit]', 'true');
+      formData.append('properties[bundle_id]', mainItem.properties.bundle_id || '');
+      formData.append('properties[_deposit_unit_amount]', depositAmount);
+      formData.append('properties[_main_product_quantity]', mainItem.quantity.toString());
       formData.append('properties[main_product_variant]', mainItem.variant_id.toString());
       
       // Add component data if available
@@ -281,13 +288,33 @@ class CartDepositManager extends Component {
   }
 
   /**
+   * Calculate required deposit quantity based on deposit amount and main product quantity
+   * @param {object} depositItem 
+   * @param {object} mainItem 
+   * @returns {number}
+   */
+  #calculateRequiredDepositQuantity(depositItem, mainItem) {
+    // Get the deposit unit amount (per main product)
+    const depositUnitAmount = parseFloat(depositItem.properties?._deposit_unit_amount || '0');
+    const mainProductQuantity = mainItem.quantity;
+    
+    // Calculate total deposit amount needed
+    const totalDepositAmount = depositUnitAmount * mainProductQuantity;
+    
+    // Calculate deposit quantity: total amount divided by $100 unit price
+    const requiredDepositQuantity = Math.ceil(totalDepositAmount / 100);
+    
+    return Math.max(1, requiredDepositQuantity); // Ensure at least 1
+  }
+
+  /**
    * Find deposit items in cart
    * @param {Array} cartItems 
    * @returns {Array}
    */
   #findDepositItems(cartItems) {
     return cartItems.filter(item =>
-      item.properties && item.properties._deposit_product === 'true'
+      item.properties && item.properties._is_deposit === 'true'
     );
   }
 
@@ -298,7 +325,7 @@ class CartDepositManager extends Component {
    */
   #findMainProductItems(cartItems) {
     return cartItems.filter(item =>
-      !item.properties || item.properties._deposit_product !== 'true'
+      !item.properties || item.properties._is_deposit !== 'true'
     );
   }
 
