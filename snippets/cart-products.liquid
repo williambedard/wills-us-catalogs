@@ -187,34 +187,6 @@
                         {%- endfor -%}
                       {%- endif -%}
 
-                      {%- liquid
-                        # Custom property display logic based on product type
-                        assign is_deposit_product = false
-                        assign is_main_product = false
-                        
-                        for prop in item.properties
-                          if prop.first == '_is_deposit_product' and prop.last == 'true'
-                            assign is_deposit_product = true
-                          elsif prop.first == 'deposit_option'
-                            assign is_main_product = true
-                          endif
-                        endfor
-                      -%}
-                      
-                      {%- comment -%} DEBUG: Show product type detection {%- endcomment -%}
-                      {%- if is_deposit_product -%}
-                        <div class="cart-items__properties" style="color: red; font-size: 0.8em;">
-                          <dt>DEBUG:</dt>
-                          <dd>This is a DEPOSIT product</dd>
-                        </div>
-                      {%- endif -%}
-                      {%- if is_main_product -%}
-                        <div class="cart-items__properties" style="color: blue; font-size: 0.8em;">
-                          <dt>DEBUG:</dt>
-                          <dd>This is a MAIN product</dd>
-                        </div>
-                      {%- endif -%}
-                      
                       {%- for property in item.properties -%}
                         {%- assign property_first_char = property.first | slice: 0 -%}
                         {%- assign show_property = false -%}
@@ -223,13 +195,11 @@
                         
                         {%- if property.last != blank -%}
                           {%- if property.first == '_bundle_id' -%}
-                            {%- comment -%} Always show bundle_id for both product types {%- endcomment -%}
                             {%- assign show_property = true -%}
                             {%- assign display_key = 'Bundle ID' -%}
                             
                           {%- elsif property.first == 'deposit_option' -%}
-                            {%- if is_main_product -%}
-                              {%- comment -%} Show friendly deposit option name for main products {%- endcomment -%}
+                            {%- unless item.properties._is_deposit_product -%}
                               {%- assign show_property = true -%}
                               {%- assign display_key = 'Deposit Payment' -%}
                               {%- if property.last == 'credit_card_on_file' -%}
@@ -239,11 +209,9 @@
                               {%- elsif property.last == 'return_cores_in_advance' -%}
                                 {%- assign display_value = 'Return Cores in Advance' -%}
                               {%- endif -%}
-                            {%- endif -%}
-                            {%- comment -%} Hide deposit_option for deposit products {%- endcomment -%}
+                            {%- endunless -%}
                             
                           {%- elsif property_first_char != '_' -%}
-                            {%- comment -%} Show other non-underscore properties {%- endcomment -%}
                             {%- assign show_property = true -%}
                           {%- endif -%}
                         {%- endif -%}
@@ -262,8 +230,7 @@
                         {%- endif -%}
                       {%- endfor -%}
                       
-                      {%- if is_main_product -%}
-                        {%- comment -%} Show variant metafields for main products (only non-zero values) {%- endcomment -%}
+                      {%- unless item.properties._is_deposit_product -%}
                         {%- if item.variant.metafields.custom.number_of_injectors.value and item.variant.metafields.custom.number_of_injectors.value > 0 -%}
                           <div class="cart-items__properties">
                             <dt>Injectors:</dt>
@@ -282,62 +249,32 @@
                             <dd>{{ item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value }} units</dd>
                           </div>
                         {%- endif -%}
-                      {%- endif -%}
+                      {%- endunless -%}
                       
-                      {%- if is_deposit_product -%}
-                        {%- comment -%} Show deposit pricing logic for deposit products based on linked main product {%- endcomment -%}
-                        {%- liquid
-                          # Find the main product in the same bundle
-                          assign current_bundle_id = ''
-                          assign main_product_variant = null
-                          
-                          for prop in item.properties
-                            if prop.first == '_bundle_id'
-                              assign current_bundle_id = prop.last
-                              break
-                            endif
-                          endfor
-                          
-                          # Find the main product with matching bundle_id
-                          for cart_item in cart.items
-                            assign item_bundle_id = ''
-                            assign has_deposit_option = false
-                            
-                            for cart_prop in cart_item.properties
-                              if cart_prop.first == '_bundle_id'
-                                assign item_bundle_id = cart_prop.last
-                              elsif cart_prop.first == 'deposit_option'
-                                assign has_deposit_option = true
-                              endif
-                            endfor
-                            
-                            if item_bundle_id == current_bundle_id and has_deposit_option
-                              assign main_product_variant = cart_item.variant
-                              break
-                            endif
-                          endfor
-                        -%}
-                        
-                        {%- if main_product_variant -%}
-                          {%- if main_product_variant.metafields.custom.number_of_injectors.value and main_product_variant.metafields.custom.number_of_injectors.value > 0 -%}
-                            <div class="cart-items__properties">
-                              <dt>Injectors:</dt>
-                              <dd>${{ main_product_variant.metafields.custom.number_of_injectors.value | times: 100 }} ($100 per unit)</dd>
-                            </div>
+                      {%- if item.properties._is_deposit_product -%}
+                        {%- for cart_item in cart.items -%}
+                          {%- if cart_item.properties._bundle_id == item.properties._bundle_id and cart_item.properties.deposit_option -%}
+                            {%- if cart_item.variant.metafields.custom.number_of_injectors.value and cart_item.variant.metafields.custom.number_of_injectors.value > 0 -%}
+                              <div class="cart-items__properties">
+                                <dt>Injectors:</dt>
+                                <dd>${{ cart_item.variant.metafields.custom.number_of_injectors.value | times: 100 }} ($100 per unit)</dd>
+                              </div>
+                            {%- endif -%}
+                            {%- if cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
+                              <div class="cart-items__properties">
+                                <dt>High Pressure Fuel Pumps:</dt>
+                                <dd>${{ cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | times: 200 }} ($200 per unit)</dd>
+                              </div>
+                            {%- endif -%}
+                            {%- if cart_item.variant.metafields.custom.number_of_fuel_lines.value and cart_item.variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
+                              <div class="cart-items__properties">
+                                <dt>Fuel Lines:</dt>
+                                <dd>${{ cart_item.variant.metafields.custom.number_of_fuel_lines.value | times: 100 }} ($100 per set)</dd>
+                              </div>
+                            {%- endif -%}
+                            {%- break -%}
                           {%- endif -%}
-                          {%- if main_product_variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and main_product_variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
-                            <div class="cart-items__properties">
-                              <dt>High Pressure Fuel Pumps:</dt>
-                              <dd>${{ main_product_variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | times: 200 }} ($200 per unit)</dd>
-                            </div>
-                          {%- endif -%}
-                          {%- if main_product_variant.metafields.custom.number_of_fuel_lines.value and main_product_variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
-                            <div class="cart-items__properties">
-                              <dt>Fuel Lines:</dt>
-                              <dd>${{ main_product_variant.metafields.custom.number_of_fuel_lines.value | times: 100 }} ($100 per set)</dd>
-                            </div>
-                          {%- endif -%}
-                        {%- endif -%}
+                        {%- endfor -%}
                       {%- endif -%}
                     </dl>
 
