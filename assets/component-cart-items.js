@@ -330,6 +330,7 @@ class CartItemsComponent extends Component {
           }
         } else if (!main && deposit) {
           // Remove orphaned deposit product
+          console.log(`Removing orphaned deposit: line ${deposit.lineNumber}, bundle ${bundleId}`);
           const body = JSON.stringify({
             line: deposit.lineNumber,
             quantity: 0,
