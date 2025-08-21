@@ -9,15 +9,7 @@
   - Cart state validation
 {%- enddoc -%}
 
-<script src="{{ 'cart-deposit-manager.js' | asset_url }}" type="module"></script>
-
-<cart-deposit-manager 
-  class="cart-deposit-manager"
-  data-section-id="{{ section.id }}"
-  style="display: none;"
->
-  <!-- Hidden component - manages cart state in background -->
-</cart-deposit-manager>
+<!-- Cart deposit handler temporarily disabled for cleanup -->
 
 {% comment %}
   Expose necessary configuration to JavaScript
@@ -28,7 +20,6 @@
   Object.assign(window.Theme.routes, {
     cart_add_url: '{{ routes.cart_add_url }}',
     cart_update_url: '{{ routes.cart_update_url }}',
-    cart_change_url: '{{ routes.cart_change_url }}',
     cart_url: '{{ routes.cart_url }}'
   });
 
@@ -44,19 +35,19 @@
       productId: '{{ deposit_product.id }}',
       variants: {
         creditCard: {
-          id: '{{ credit_card_variant.id | default: "" }}',
-          title: '{{ credit_card_variant.title | default: "" }}',
-          price: {{ credit_card_variant.price | default: 0 | money_without_currency | remove: ',' | default: 0 }}
+          id: '{{ credit_card_variant.id }}',
+          title: '{{ credit_card_variant.title }}',
+          price: {{ credit_card_variant.price | money_without_currency | remove: ',' }}
         },
         payDeposit: {
-          id: '{{ pay_deposit_variant.id | default: "" }}',
-          title: '{{ pay_deposit_variant.title | default: "" }}',
-          price: {{ pay_deposit_variant.price | default: 0 | money_without_currency | remove: ',' | default: 0 }}
+          id: '{{ pay_deposit_variant.id }}',
+          title: '{{ pay_deposit_variant.title }}',
+          price: {{ pay_deposit_variant.price | money_without_currency | remove: ',' }}
         },
         returnFirst: {
-          id: '{{ return_first_variant.id | default: "" }}',
-          title: '{{ return_first_variant.title | default: "" }}',
-          price: {{ return_first_variant.price | default: 0 | money_without_currency | remove: ',' | default: 0 }}
+          id: '{{ return_first_variant.id }}',
+          title: '{{ return_first_variant.title }}',
+          price: {{ return_first_variant.price | money_without_currency | remove: ',' }}
         }
       }
     });
