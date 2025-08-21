@@ -47,51 +47,10 @@
   {% endif %}
 
   {%- liquid
-    comment
-    # Calculate custom cart total including deposit products with custom pricing
-    endcomment
-    assign custom_cart_total_cents = 0
-    
-    comment
-    # Loop through all cart items to calculate proper total
-    endcomment
-    for item in cart.items
-      assign item_total_cents = 0
-      assign has_custom_pricing = false
-      
-      comment
-      # Check if this item has custom display pricing (deposit products)
-      endcomment
-      for property in item.properties
-        if property.first == '_display_price'
-          comment
-          # Extract unit price and calculate line total for deposit products
-          endcomment
-          assign custom_unit_price_str = property.last | remove: '$' | remove: ','
-          assign custom_unit_price_cents = custom_unit_price_str | times: 100
-          assign item_total_cents = custom_unit_price_cents | times: item.quantity
-          assign has_custom_pricing = true
-          break
-        endif
-      endfor
-      
-      comment
-      # Use standard Shopify pricing for regular products
-      endcomment
-      unless has_custom_pricing
-        assign item_total_cents = item.final_line_price
-      endunless
-      
-      assign custom_cart_total_cents = custom_cart_total_cents | plus: item_total_cents
-    endfor
-    
-    comment
-    # Format the custom total with proper currency display
-    endcomment
     if settings.currency_code_enabled_cart_total
-      assign total_price = custom_cart_total_cents | money_with_currency
+      assign total_price = cart.total_price | money_with_currency
     else
-      assign total_price = custom_cart_total_cents | money
+      assign total_price = cart.total_price | money
     endif
   -%}
 
