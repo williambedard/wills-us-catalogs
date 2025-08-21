@@ -103,48 +103,17 @@ class CartDepositManager extends Component {
       const cartData = await this.#getCartData();
       
       if (!cartData || !cartData.items || cartData.items.length === 0) {
-        console.log('Cart is empty, skipping deposit validation');
         return; // Empty cart, nothing to validate
       }
       
-      console.log('=== DEPOSIT MANAGER VALIDATION ===');
-      console.log('Total cart items:', cartData.items.length);
-      
       const depositItems = this.#findDepositItems(cartData.items);
       const mainProductItems = this.#findMainProductItems(cartData.items);
-      
-      console.log('Deposit items found:', depositItems.length);
-      console.log('Main product items found:', mainProductItems.length);
-      
-      depositItems.forEach(item => {
-        console.log('Deposit item:', {
-          id: item.id,
-          key: item.key,
-          bundle_id: item.properties?.bundle_id,
-          quantity: item.quantity
-        });
-      });
-      
-      mainProductItems.forEach(item => {
-        console.log('Main product:', {
-          id: item.id,
-          key: item.key,
-          bundle_id: item.properties?.bundle_id,
-          quantity: item.quantity,
-          title: item.product?.title
-        });
-      });
       
       // Handle quantity mismatches
       await this.#handleQuantityMismatches(depositItems, mainProductItems);
       
       // Remove orphaned deposits
       await this.#removeOrphanedDeposits(depositItems, mainProductItems);
-      
-      // Add missing deposits for new main products
-      await this.#addMissingDeposits(depositItems, mainProductItems);
-      
-      console.log('=== END DEPOSIT VALIDATION ===');
       
     } catch (error) {
       console.error('Cart deposit validation error:', error);
@@ -329,8 +298,7 @@ class CartDepositManager extends Component {
    */
   async #updateCartItems(updates) {
     try {
-      console.log('Sending cart update with:', { updates });
-      const response = await fetch(window.Theme.routes.cart_update_url, {
+      const response = await fetch('/cart/update.js', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
