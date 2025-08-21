@@ -259,11 +259,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Handle form submission to add deposit product when needed
+  // Validate deposit selection before form submission (cart logic will be handled elsewhere)
   const productFormElements = document.querySelectorAll('product-form form[action*="/cart/add"]');
   
   productFormElements.forEach(form => {
-    form.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', function(e) {
       // Only validate if deposit picker is present
       const depositPicker = document.querySelector('.deposit-variant-picker');
       if (!depositPicker) return; // No deposit picker, proceed normally
@@ -278,81 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      // If deposit is required, add deposit product after main product
-      if (selectedDepositOption !== 'return_cores_in_advance') {
-        e.preventDefault(); // Prevent default to handle manually
-        
-        try {
-          const formData = new FormData(form);
-          const mainVariantId = formData.get('id');
-          const quantity = parseInt(formData.get('quantity') || '1');
-          
-          // Generate unique bundle ID for this main+deposit pair
-          const bundleId = Date.now().toString();
-          
-          // First, add the main product with deposit_option and bundle_id properties using AJAX
-          const mainResponse = await fetch('/cart/add.js', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-              items: [{
-                id: parseInt(mainVariantId),
-                quantity: quantity,
-                properties: {
-                  'deposit_option': selectedDepositOption,
-                  'bundle_id': bundleId
-                }
-              }]
-            })
-          });
-          
-          if (!mainResponse.ok) {
-            throw new Error('Failed to add main product');
-          }
-          
-          // Second, add deposit product using AJAX
-          const selectedOption = dropdown.querySelector('option:checked');
-          const depositVariantId = selectedOption?.getAttribute('data-variant-id');
-          
-          if (depositVariantId) {
-            const depositAmount = calculateDepositAmount(mainVariantId);
-            
-            const depositResponse = await fetch('/cart/add.js', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-              },
-              body: JSON.stringify({
-                items: [{
-                  id: parseInt(depositVariantId),
-                  quantity: quantity,
-                  properties: {
-                    '_display_price': '$' + depositAmount.toFixed(2),
-                    'bundle_id': bundleId,
-                    '_is_deposit': 'true'
-                  }
-                }]
-              })
-            });
-            
-            if (!depositResponse.ok) {
-              console.error('Failed to add deposit product');
-            }
-          }
-          
-          // Redirect to cart
-          window.location.href = '/cart';
-          
-        } catch (error) {
-          console.error('Error adding products:', error);
-          alert('Failed to add products to cart. Please try again.');
-        }
-      }
-      // For 'return_cores_in_advance', let the form submit normally
+      // Let the form submit normally - theme will handle cart addition
     });
   });
   
