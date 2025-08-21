@@ -85,43 +85,6 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   // DEBUG: Log when our interceptor is loaded
   console.log('[INIT] Deposit fetch interceptor loaded');
   
-  // Temporarily disable page redirects for debugging
-  const originalLocation = window.location;
-  Object.defineProperty(window, 'location', {
-    value: {
-      ...originalLocation,
-      href: originalLocation.href,
-      assign: function(url) {
-        console.log('[REDIRECT-BLOCKED] Attempted redirect to:', url);
-        if (url.includes('/cart')) {
-          console.log('[REDIRECT-BLOCKED] Cart redirect prevented for debugging');
-          return;
-        }
-        originalLocation.assign(url);
-      },
-      replace: function(url) {
-        console.log('[REDIRECT-BLOCKED] Attempted replace to:', url);
-        if (url.includes('/cart')) {
-          console.log('[REDIRECT-BLOCKED] Cart redirect prevented for debugging');
-          return;
-        }
-        originalLocation.replace(url);
-      },
-      set href(url) {
-        console.log('[REDIRECT-BLOCKED] Attempted href set to:', url);
-        if (url.includes('/cart')) {
-          console.log('[REDIRECT-BLOCKED] Cart redirect prevented for debugging');
-          return;
-        }
-        originalLocation.href = url;
-      },
-      get href() {
-        return originalLocation.href;
-      }
-    },
-    configurable: true
-  });
-  
   // Intercept fetch calls to detect when main products are added to cart
   window.fetch = function(...args) {
     const [resource, config] = args;
