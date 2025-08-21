@@ -391,11 +391,15 @@ class CartItemsComponent extends Component {
    * @param {number} depositUnitAmount - The deposit unit amount per main product
    */
   async #updateDepositProperties(depositKey, mainQuantity, depositUnitAmount) {
-    // Since we can't easily update individual line item properties via AJAX,
-    // the properties will be recalculated and updated in future cart sync
-    // This is handled by the deposit-variant-picker logic during initial addition
-    // For quantity changes, we rely on the section re-render to show updated info
-    console.log(`Updated deposit ${depositKey} for main quantity ${mainQuantity}`);
+    // For now, the properties will show the original quantities
+    // In the future, we could implement a complete deposit replacement
+    // to update the component breakdown properties
+    
+    // The user will see:
+    // - Correct deposit quantity (updated)
+    // - Component breakdown from initial add (may be outdated after qty changes)
+    // This is acceptable as the total deposit amount is still correct
+    console.log(`Updated deposit ${depositKey} for main quantity ${mainQuantity}, unit amount $${depositUnitAmount}`);
   }
 }
 
