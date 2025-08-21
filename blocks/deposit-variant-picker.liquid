@@ -236,9 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const mainVariantId = formData.get('id');
           const quantity = parseInt(formData.get('quantity') || '1');
           
-          // Generate unique bundle ID for this main+deposit pair
-          // Include variant ID and random component to ensure uniqueness across different products
-          const bundleId = `${Date.now()}_${mainVariantId}_${Math.random().toString(36).substr(2, 9)}`;
+          // Generate shorter unique bundle ID for this main+deposit pair
+          const bundleId = `${Date.now().toString().slice(-8)}_${Math.random().toString(36).substr(2, 4)}`;
           
           // First, add the main product with deposit_option, bundle_id, and component quantities
           const variantMetafields = window.productMetafields?.[mainVariantId];
@@ -249,13 +248,13 @@ document.addEventListener('DOMContentLoaded', function() {
           
           // Add component quantities as visible properties for customer transparency
           if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
-            mainProductProps['Injectors required'] = variantMetafields.injector_quantity.toString();
+            mainProductProps['Injectors included'] = variantMetafields.injector_quantity.toString();
           }
           if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
-            mainProductProps['Fuel pumps required'] = variantMetafields.fuel_pump_quantity.toString();
+            mainProductProps['Fuel pumps included'] = variantMetafields.fuel_pump_quantity.toString();
           }
           if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
-            mainProductProps['Fuel lines required'] = variantMetafields.fuel_line_quantity.toString();
+            mainProductProps['Fuel lines included'] = variantMetafields.fuel_line_quantity.toString();
           }
           
           const mainResponse = await fetch('/cart/add.js', {
