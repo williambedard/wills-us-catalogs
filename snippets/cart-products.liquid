@@ -229,53 +229,6 @@
                           </div>
                         {%- endif -%}
                       {%- endfor -%}
-                      
-                      {%- unless item.properties._is_deposit_product -%}
-                        {%- if item.variant.metafields.custom.number_of_injectors.value and item.variant.metafields.custom.number_of_injectors.value > 0 -%}
-                          <div class="cart-items__properties">
-                            <dt>Injectors:</dt>
-                            <dd>{{ item.variant.metafields.custom.number_of_injectors.value }} units</dd>
-                          </div>
-                        {%- endif -%}
-                        {%- if item.variant.metafields.custom.number_of_fuel_lines.value and item.variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
-                          <div class="cart-items__properties">
-                            <dt>Fuel Lines:</dt>
-                            <dd>{{ item.variant.metafields.custom.number_of_fuel_lines.value }} pieces</dd>
-                          </div>
-                        {%- endif -%}
-                        {%- if item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
-                          <div class="cart-items__properties">
-                            <dt>High Pressure Fuel Pumps:</dt>
-                            <dd>{{ item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value }} units</dd>
-                          </div>
-                        {%- endif -%}
-                      {%- endunless -%}
-                      
-                      {%- if item.properties._is_deposit_product -%}
-                        {%- for cart_item in cart.items -%}
-                          {%- if cart_item.properties._bundle_id == item.properties._bundle_id and cart_item.properties.deposit_option and cart_item.properties._is_deposit_product != 'true' -%}
-                            {%- if cart_item.variant.metafields.custom.number_of_injectors.value and cart_item.variant.metafields.custom.number_of_injectors.value > 0 -%}
-                              <div class="cart-items__properties">
-                                <dt>Injectors:</dt>
-                                <dd>$100 per unit</dd>
-                              </div>
-                            {%- endif -%}
-                            {%- if cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and cart_item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
-                              <div class="cart-items__properties">
-                                <dt>High Pressure Fuel Pumps:</dt>
-                                <dd>$200 per unit</dd>
-                              </div>
-                            {%- endif -%}
-                            {%- if cart_item.variant.metafields.custom.number_of_fuel_lines.value and cart_item.variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
-                              <div class="cart-items__properties">
-                                <dt>Fuel Lines:</dt>
-                                <dd>$100 per set</dd>
-                              </div>
-                            {%- endif -%}
-                            {%- break -%}
-                          {%- endif -%}
-                        {%- endfor -%}
-                      {%- endif -%}
                     </dl>
 
                     {% if item.selling_plan_allocation %}
