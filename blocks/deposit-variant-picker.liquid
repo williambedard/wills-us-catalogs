@@ -314,6 +314,30 @@ document.addEventListener('DOMContentLoaded', function() {
       const bundleId = Date.now().toString();
       const depositQuantity = Math.ceil(depositAmount / 100);
       
+      // Get variant metafields for main product to add unit pricing to deposit
+      const variantMetafields = window.productMetafields?.[mainVariantId];
+      const depositProperties = {
+        '_deposit_for': 'main_product',
+        '_bundle_id': bundleId,
+        '_is_deposit_product': 'true',
+        'deposit_option': depositOption,
+        '_calculated_amount': '$' + depositAmount.toFixed(2)
+      };
+      
+      // Add unit pricing properties based on main product metafields
+      if (variantMetafields?.quantities) {
+        const quantities = variantMetafields.quantities;
+        if (quantities.injectors > 0) {
+          depositProperties['Injectors'] = '$100 per unit';
+        }
+        if (quantities.fuel_pumps > 0) {
+          depositProperties['High Pressure Fuel Pumps'] = '$200 per unit';
+        }
+        if (quantities.fuel_lines > 0) {
+          depositProperties['Fuel Lines'] = '$100 per set';
+        }
+      }
+      
       const items = [
         {
           id: parseInt(mainVariantId),
@@ -326,13 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {
           id: parseInt(depositVariantId), 
           quantity: depositQuantity,
-          properties: {
-            '_deposit_for': 'main_product',
-            '_bundle_id': bundleId,
-            '_is_deposit_product': 'true',
-            'deposit_option': depositOption,
-            '_calculated_amount': '$' + depositAmount.toFixed(2)
-          }
+          properties: depositProperties
         }
       ];
       
