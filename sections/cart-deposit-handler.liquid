@@ -25,9 +25,23 @@
 
   {% assign deposit_product = all_products['refundable-core-deposit'] %}
   {% if deposit_product %}
+    // DEBUG: Deposit product found
+    console.log('✅ Deposit product found:', '{{ deposit_product.title }}', 'ID:', '{{ deposit_product.id }}');
     {% assign credit_card_variant = deposit_product.variants | where: 'title', 'Credit card on file' | first %}
     {% assign pay_deposit_variant = deposit_product.variants | where: 'title', 'Pay core deposit upfront' | first %}
     {% assign return_first_variant = deposit_product.variants | where: 'title', 'Return cores in advance' | first %}
+    
+    // DEBUG: Check which variants were found
+    console.log('Deposit variants found:', {
+      creditCard: '{{ credit_card_variant.title | default: "NOT FOUND" }}',
+      payDeposit: '{{ pay_deposit_variant.title | default: "NOT FOUND" }}', 
+      returnFirst: '{{ return_first_variant.title | default: "NOT FOUND" }}'
+    });
+    
+    // DEBUG: Show all available variant titles for reference
+    console.log('All available variant titles:', [
+      {% for variant in deposit_product.variants %}'{{ variant.title }}'{% unless forloop.last %},{% endunless %}{% endfor %}
+    ]);
     
     window.depositProductConfig = window.depositProductConfig || {};
     Object.assign(window.depositProductConfig, {
