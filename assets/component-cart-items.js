@@ -170,7 +170,7 @@ class CartItemsComponent extends Component {
         this.#syncBundleQuantities();
       })
       .catch((error) => {
-        console.error(error);
+        console.error('Cart update failed:', error);
       })
       .finally(() => {
         this.#enableCartItems();
