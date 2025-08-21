@@ -305,7 +305,7 @@
                   {% assign can_remove = item.instructions.can_remove | default: true, allow_false: true %}
                   
                   {% comment %} Disable quantity and removal controls for deposit products {% endcomment %}
-                  {% if item.properties._is_deposit == 'true' %}
+                  {% if item.properties._is_deposit_product == 'true' %}
                     {% assign can_update_quantity = false %}
                     {% assign can_remove = false %}
                   {% endif %}
@@ -319,7 +319,7 @@
                     can_update_quantity: can_update_quantity
                   %}
                   
-                  {% if item.properties._is_deposit == 'true' %}
+                  {% if item.properties._is_deposit_product == 'true' %}
                     <p class="cart-items__deposit-note">
                       <small style="color: #666; font-style: italic;">Quantity controlled by main product</small>
                     </p>
