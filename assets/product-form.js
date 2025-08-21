@@ -301,7 +301,7 @@ class ProductFormComponent extends Component {
         }
       })
       .catch((error) => {
-        console.error(error);
+        console.error('Product form error:', error);
       })
       .finally(() => {
         // add more thing to do in here if needed.

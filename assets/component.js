@@ -254,7 +254,7 @@ function registerEventListeners() {
 
             callback.call(instance, ...args);
           } catch (error) {
-            console.error(error);
+            console.error('Component callback error:', error);
           }
         }
       },
