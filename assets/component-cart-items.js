@@ -126,12 +126,29 @@ class CartItemsComponent extends Component {
         }
       });
 
-      // Debug the line parameter
-      console.log('Updating cart line:', line, 'to quantity:', quantity);
+      // First, get current cart to validate line number
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+      
+      console.log('Current cart has', cart.items.length, 'items');
+      console.log('Cart items:', cart.items.map((item, idx) => ({
+        line: idx + 1,
+        key: item.key,
+        title: item.product?.title || 'Unknown',
+        quantity: item.quantity
+      })));
+      console.log('Trying to update line:', line, 'to quantity:', quantity);
+      
+      const lineNum = parseInt(line, 10);
+      if (lineNum < 1 || lineNum > cart.items.length) {
+        console.error(`Invalid line number ${lineNum}. Cart has ${cart.items.length} items.`);
+        console.error('Available lines:', cart.items.map((item, idx) => idx + 1));
+        return;
+      }
 
       // Use line-based update - ensure line is an integer
       const body = JSON.stringify({
-        line: parseInt(line, 10),
+        line: lineNum,
         quantity: parseInt(quantity, 10),
         sections: Array.from(sectionsToUpdate).join(','),
         sections_url: window.location.pathname,
