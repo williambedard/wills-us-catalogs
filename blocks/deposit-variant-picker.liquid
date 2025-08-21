@@ -130,6 +130,84 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     }
   }
   
+  // Function to add both main product and deposit product to cart
+  async function addProductsToCartWithDeposit(mainVariantId, quantity, depositOption, depositVariantId, depositAmount) {
+    const bundleId = Date.now().toString();
+    const depositQuantity = Math.ceil(depositAmount / 100); // Each deposit variant = $100
+    
+    try {
+      console.log('[START] Adding main product and deposit to cart:', {
+        mainVariantId,
+        quantity,
+        depositVariantId,
+        depositQuantity,
+        depositAmount,
+        bundleId
+      });
+      
+      // Step 1: Add main product to cart
+      const mainResponse = await fetch(window.Theme?.routes?.cart_add_url || '/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          items: [{
+            id: parseInt(mainVariantId),
+            quantity: quantity,
+            properties: {
+              'bundle_id': bundleId,
+              'deposit_option': depositOption
+            }
+          }]
+        })
+      });
+      
+      if (!mainResponse.ok) {
+        throw new Error(`Failed to add main product: ${mainResponse.status}`);
+      }
+      
+      console.log('[SUCCESS] Main product added to cart');
+      
+      // Step 2: Add deposit product to cart
+      const depositResponse = await fetch(window.Theme?.routes?.cart_add_url || '/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          items: [{
+            id: parseInt(depositVariantId),
+            quantity: depositQuantity,
+            properties: {
+              '_display_price': '$' + depositAmount.toFixed(2),
+              'bundle_id': bundleId,
+              '_is_deposit': 'true',
+              'deposit_option': depositOption,
+              '_deposit_breakdown': depositQuantity + ' x $100.00'
+            }
+          }]
+        })
+      });
+      
+      if (!depositResponse.ok) {
+        throw new Error(`Failed to add deposit product: ${depositResponse.status}`);
+      }
+      
+      console.log('[SUCCESS] Deposit product added to cart');
+      console.log('[COMPLETE] Both products added successfully, redirecting to cart...');
+      
+      // Step 3: Redirect to cart
+      window.location.href = '/cart';
+      
+    } catch (error) {
+      console.error('[ERROR] Failed to add products to cart:', error);
+      alert('Failed to add products to cart. Please try again.');
+    }
+  }
+  
   // Function to update deposit amounts when variant changes
   function updateDepositAmountsForVariant(variantId) {
     const depositAmount = calculateDepositAmount(variantId);
@@ -351,43 +429,19 @@ document.addEventListener('DOMContentLoaded', function() {
       const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
       const depositAmount = calculateDepositAmount(mainVariantId);
       
-      console.log('[FORM] Submission - will add to cart:', {
-        mainProduct: {
-          variantId: mainVariantId,
-          quantity: parseInt(quantity)
-        },
-        depositProduct: {
-          option: selectedDepositOption,
-          variantId: depositVariantId,
-          calculatedAmount: depositAmount,
-          skipDeposit: selectedDepositOption === 'return_cores_in_advance'
-        }
-      });
-      
-      // Add bundle_id properties to main product if deposit is required
+      // For products with deposit requirements, handle cart addition ourselves
       if (selectedDepositOption !== 'return_cores_in_advance') {
-        const bundleId = Date.now().toString();
+        e.preventDefault(); // Stop the theme from handling this
         
-        // Add bundle_id and deposit info to main product form
-        const bundleIdInput = document.createElement('input');
-        bundleIdInput.type = 'hidden';
-        bundleIdInput.name = 'properties[bundle_id]';
-        bundleIdInput.value = bundleId;
-        form.appendChild(bundleIdInput);
+        console.log('[INTERCEPT] Taking over cart addition for deposit bundle');
         
-        const depositOptionInput = document.createElement('input');
-        depositOptionInput.type = 'hidden';
-        depositOptionInput.name = 'properties[deposit_option]';
-        depositOptionInput.value = selectedDepositOption;
-        form.appendChild(depositOptionInput);
-        
-        // Store bundle_id for the deposit addition later
-        window._currentBundleId = bundleId;
-        
-        console.log('[BUNDLE] Added bundle_id to main product:', bundleId);
+        // Handle both main product and deposit addition
+        addProductsToCartWithDeposit(mainVariantId, parseInt(quantity), selectedDepositOption, depositVariantId, depositAmount);
+        return false;
       }
       
-      // Let the form submit normally - theme will handle cart addition
+      // For 'return_cores_in_advance', let the theme handle it normally
+      console.log('[NORMAL] Letting theme handle cart addition (no deposit)');
     });
   });
   
