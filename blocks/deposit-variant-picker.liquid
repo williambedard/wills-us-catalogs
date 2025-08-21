@@ -27,21 +27,19 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   endif
   
   comment
-  # Get the first variant's quantity metafields (Integer type) and calculate total deposit
+  # Get the first variant's quantity metafields and calculate total using unit prices
+  # Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
   endcomment
   if show_deposit_options and first_variant
-    assign num_fuel_pumps = first_variant.metafields.custom.number_of_high_pressure_fuel_pumps | default: 0
-    assign num_injectors = first_variant.metafields.custom.number_of_injectors | default: 0
-    assign num_fuel_lines = first_variant.metafields.custom.number_of_fuel_lines | default: 0
+    assign num_injectors = first_variant.metafields.custom.number_of_injectors.value | default: 0
+    assign num_fuel_lines = first_variant.metafields.custom.number_of_fuel_lines.value | default: 0
+    assign num_fuel_pumps = first_variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | default: 0
     
-    comment
-    # Calculate deposit amounts: injectors × $100, fuel pumps × $200, fuel lines × $100
-    # Result will be in cents for proper Money formatting
-    endcomment
-    assign fuel_pump_deposit = num_fuel_pumps | times: 20000
-    assign injector_deposit = num_injectors | times: 10000
-    assign fuel_line_deposit = num_fuel_lines | times: 10000
-    assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
+    assign injector_total = num_injectors | times: 100
+    assign fuel_line_total = num_fuel_lines | times: 100
+    assign fuel_pump_total = num_fuel_pumps | times: 200
+    
+    assign initial_deposit = injector_total | plus: fuel_line_total | plus: fuel_pump_total
   endif
 %}
 
@@ -49,29 +47,89 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 {% if show_deposit_options %}
 <!-- DEBUG: Product has has_deposit_options tag -->
 <!-- DEBUG: First variant ID: {{ first_variant.id }} -->
-<!-- DEBUG: Number of fuel pumps: {{ first_variant.metafields.custom.number_of_high_pressure_fuel_pumps }} -->
-<!-- DEBUG: Number of injectors: {{ first_variant.metafields.custom.number_of_injectors }} -->  
-<!-- DEBUG: Number of fuel lines: {{ first_variant.metafields.custom.number_of_fuel_lines }} -->
+<!-- DEBUG: Number of injectors: {{ num_injectors }} -->
+<!-- DEBUG: Number of fuel lines: {{ num_fuel_lines }} -->  
+<!-- DEBUG: Number of fuel pumps: {{ num_fuel_pumps }} -->
 <!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
-<!-- DEBUG: Individual amounts - Fuel pump: {{ fuel_pump_deposit }}, Injector: {{ injector_deposit }}, Fuel line: {{ fuel_line_deposit }} -->
+<!-- DEBUG: Individual amounts - Injectors: {{ injector_total }}, Fuel lines: {{ fuel_line_total }}, Fuel pumps: {{ fuel_pump_total }} -->
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
     {% comment %}DEBUG: Log what variant we're processing{% endcomment %}
-    {% comment %}Extract quantity values from Integer metafields{% endcomment %}
-    {% assign fp_qty = variant.metafields.custom.number_of_high_pressure_fuel_pumps | default: 0 %}
-    {% assign inj_qty = variant.metafields.custom.number_of_injectors | default: 0 %}
-    {% assign fl_qty = variant.metafields.custom.number_of_fuel_lines | default: 0 %}
+    {% comment %}Extract quantity values and calculate totals using unit prices{% endcomment %}
+    {% assign num_inj = variant.metafields.custom.number_of_injectors.value | default: 0 %}
+    {% assign num_fl = variant.metafields.custom.number_of_fuel_lines.value | default: 0 %}
+    {% assign num_fp = variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | default: 0 %}
+    
+    {% assign inj_total = num_inj | times: 100 %}
+    {% assign fl_total = num_fl | times: 100 %}
+    {% assign fp_total = num_fp | times: 200 %}
     
     window.productMetafields["{{ variant.id }}"] = {
-      "fuel_pump_quantity": {{ fp_qty }},
-      "injector_quantity": {{ inj_qty }},
-      "fuel_line_quantity": {{ fl_qty }}
+      "fuel_pump_deposit": {{ fp_total | divided_by: 100.0 }},
+      "injector_deposit": {{ inj_total | divided_by: 100.0 }},
+      "fuel_line_deposit": {{ fl_total | divided_by: 100.0 }},
+      "quantities": {
+        "injectors": {{ num_inj }},
+        "fuel_lines": {{ num_fl }},
+        "fuel_pumps": {{ num_fp }}
+      }
     };
   {% endfor %}
   
   // DEBUG: Log all metafields data
   console.log('Product metafields loaded:', window.productMetafields);
+  
+  // Function to update deposit amounts when variant changes
+  function updateDepositAmountsForVariant(variantId) {
+    const depositAmount = calculateDepositAmount(variantId);
+    
+    // Update the deposit amount display
+    const depositAmountElement = document.querySelector('.deposit-amount');
+    if (depositAmountElement) {
+      depositAmountElement.setAttribute('data-initial-amount', depositAmount.toFixed(2));
+      
+      // Check current selected deposit option to show correct amount
+      const dropdown = document.getElementById('deposit-variant-select');
+      const selectedOption = dropdown?.value;
+      
+      switch(selectedOption) {
+        case 'credit_card_on_file':
+        case 'pay_core_deposit':
+          depositAmountElement.textContent = '$' + depositAmount.toFixed(2);
+          break;
+        case 'return_cores_in_advance':
+          depositAmountElement.textContent = '$0.00';
+          break;
+        default:
+          depositAmountElement.textContent = '$' + depositAmount.toFixed(2);
+          break;
+      }
+    }
+    
+    // Update inline amounts in dropdown options
+    const inlineAmounts = document.querySelectorAll('.deposit-total-inline');
+    inlineAmounts.forEach(element => {
+      element.textContent = depositAmount.toFixed(2);
+    });
+    
+    console.log(`Updated deposit display for variant ${variantId}: $${depositAmount.toFixed(2)}`);
+  }
+  
+  // Listen for variant changes from the theme's variant picker
+  document.addEventListener('variant:selected', function(event) {
+    const selectedVariant = event.detail?.variant;
+    if (selectedVariant && selectedVariant.id) {
+      updateDepositAmountsForVariant(selectedVariant.id.toString());
+    }
+  });
+  
+  document.addEventListener('variant:update', function(event) {
+    const selectedVariant = event.detail?.variant;
+    if (selectedVariant && selectedVariant.id) {
+      updateDepositAmountsForVariant(selectedVariant.id.toString());
+    }
+  });
 </script>
 
 <div class="deposit-variant-picker" {{ block.shopify_attributes }}>
@@ -83,7 +141,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   {% if block.settings.show_amount %}
     <p class="deposit-amount-display">
       {{ block.settings.amount_label }}: 
-      <strong class="deposit-amount" data-initial-amount="{{ initial_deposit | money_without_currency }}">${{ initial_deposit | money_without_currency }}</strong>
+      <strong class="deposit-amount" data-initial-amount="{{ initial_deposit | divided_by: 100.0 | round: 2 }}">${{ initial_deposit | divided_by: 100.0 | round: 2 }}</strong>
     </p>
   {% endif %}
 
@@ -101,9 +159,9 @@ Uses JSON string parsing for reliable MONEY metafield extraction
                   data-variant-id="{{ variant.id }}">
             {% case variant.title %}
               {% when 'Credit card on file' %}
-                {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+                {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | divided_by: 100.0 | round: 2 }}</span>
               {% when 'Pay core deposit upfront' %}
-                {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
+                {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | divided_by: 100.0 | round: 2 }}</span>
               {% when 'Return cores in advance' %}
                 {{ block.settings.option3_label | default: variant.title }} - No deposit required
               {% else %}
@@ -236,27 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
           const mainVariantId = formData.get('id');
           const quantity = parseInt(formData.get('quantity') || '1');
           
-          // Generate shorter unique bundle ID for this main+deposit pair
-          const bundleId = `${Date.now().toString().slice(-8)}_${Math.random().toString(36).substr(2, 4)}`;
+          // Generate unique bundle ID for this main+deposit pair
+          const bundleId = Date.now().toString();
           
-          // First, add the main product with deposit_option, bundle_id, and component quantities
-          const variantMetafields = window.productMetafields?.[mainVariantId];
-          const mainProductProps = {
-            '_deposit_option': selectedDepositOption,
-            'bundle_id': bundleId
-          };
-          
-          // Add component quantities as visible properties for customer transparency
-          if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
-            mainProductProps['Injectors included'] = variantMetafields.injector_quantity.toString();
-          }
-          if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
-            mainProductProps['Fuel pumps included'] = variantMetafields.fuel_pump_quantity.toString();
-          }
-          if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
-            mainProductProps['Fuel lines included'] = variantMetafields.fuel_line_quantity.toString();
-          }
-          
+          // First, add the main product with deposit_option and bundle_id properties using AJAX
           const mainResponse = await fetch('/cart/add.js', {
             method: 'POST',
             headers: {
@@ -267,7 +308,10 @@ document.addEventListener('DOMContentLoaded', function() {
               items: [{
                 id: parseInt(mainVariantId),
                 quantity: quantity,
-                properties: mainProductProps
+                properties: {
+                  'deposit_option': selectedDepositOption,
+                  'bundle_id': bundleId
+                }
               }]
             })
           });
@@ -282,28 +326,6 @@ document.addEventListener('DOMContentLoaded', function() {
           
           if (depositVariantId) {
             const depositAmount = calculateDepositAmount(mainVariantId);
-            // Calculate deposit quantity: total deposit amount divided by $100 unit price
-            const depositQuantity = Math.ceil(depositAmount / 100) * quantity;
-            
-            // Get component quantities from metafields for display
-            const variantMetafields = window.productMetafields?.[mainVariantId];
-            const componentProps = {
-              'bundle_id': bundleId,
-              '_is_deposit': 'true',
-              '_deposit_unit_amount': depositAmount.toFixed(2),
-              '_main_product_quantity': quantity
-            };
-            
-            // Add component deposit rates as visible properties (only if component exists)
-            if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
-              componentProps['Injectors deposit'] = '$100 each';
-            }
-            if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
-              componentProps['Fuel pumps deposit'] = '$200 each';
-            }
-            if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
-              componentProps['Fuel lines deposit'] = '$100 each';
-            }
             
             const depositResponse = await fetch('/cart/add.js', {
               method: 'POST',
@@ -314,8 +336,12 @@ document.addEventListener('DOMContentLoaded', function() {
               body: JSON.stringify({
                 items: [{
                   id: parseInt(depositVariantId),
-                  quantity: depositQuantity,
-                  properties: componentProps
+                  quantity: quantity,
+                  properties: {
+                    '_display_price': '$' + depositAmount.toFixed(2),
+                    'bundle_id': bundleId,
+                    '_is_deposit': 'true'
+                  }
                 }]
               })
             });
@@ -338,20 +364,26 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Function to calculate deposit amount from main product metafields
+  // Now using quantity-based metafields with unit prices calculated server-side
   function calculateDepositAmount(mainVariantId) {
     const variantMetafields = window.productMetafields?.[mainVariantId];
     if (!variantMetafields) return 0;
     
-    const fuelPumpQuantity = variantMetafields.fuel_pump_quantity || 0;
-    const injectorQuantity = variantMetafields.injector_quantity || 0;
-    const fuelLineQuantity = variantMetafields.fuel_line_quantity || 0;
+    // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
+    // Values are already calculated server-side, just sum them
+    const fuelPumpDeposit = variantMetafields.fuel_pump_deposit || 0;
+    const injectorDeposit = variantMetafields.injector_deposit || 0;
+    const fuelLineDeposit = variantMetafields.fuel_line_deposit || 0;
     
-    // Calculate deposits: injectors × $100, fuel pumps × $200, fuel lines × $100
-    const fuelPumpDeposit = fuelPumpQuantity * 200;
-    const injectorDeposit = injectorQuantity * 100;
-    const fuelLineDeposit = fuelLineQuantity * 100;
+    const totalDeposit = fuelPumpDeposit + injectorDeposit + fuelLineDeposit;
     
-    return fuelPumpDeposit + injectorDeposit + fuelLineDeposit;
+    console.log(`Deposit calculation for variant ${mainVariantId}:`, {
+      quantities: variantMetafields.quantities,
+      deposits: { injectorDeposit, fuelLineDeposit, fuelPumpDeposit },
+      totalDeposit
+    });
+    
+    return totalDeposit;
   }
 
 });
