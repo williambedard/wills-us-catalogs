@@ -27,12 +27,20 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   endif
   
   comment
-  # Get the first variant's metafield values using .value property and calculate total
+  # Get the first variant's quantity metafields (Integer type) and calculate total deposit
   endcomment
   if show_deposit_options and first_variant
-    assign fuel_pump_deposit = first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value
-    assign injector_deposit = first_variant.metafields.custom.deposit_for_injectors.value
-    assign fuel_line_deposit = first_variant.metafields.custom.deposit_for_fuel_lines.value
+    assign num_fuel_pumps = first_variant.metafields.custom.number_of_high_pressure_fuel_pumps | default: 0
+    assign num_injectors = first_variant.metafields.custom.number_of_injectors | default: 0
+    assign num_fuel_lines = first_variant.metafields.custom.number_of_fuel_lines | default: 0
+    
+    comment
+    # Calculate deposit amounts: injectors × $100, fuel pumps × $200, fuel lines × $100
+    # Result will be in cents for proper Money formatting
+    endcomment
+    assign fuel_pump_deposit = num_fuel_pumps | times: 20000
+    assign injector_deposit = num_injectors | times: 10000
+    assign fuel_line_deposit = num_fuel_lines | times: 10000
     assign initial_deposit = fuel_pump_deposit | plus: injector_deposit | plus: fuel_line_deposit
   endif
 %}
@@ -41,36 +49,24 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 {% if show_deposit_options %}
 <!-- DEBUG: Product has has_deposit_options tag -->
 <!-- DEBUG: First variant ID: {{ first_variant.id }} -->
-<!-- DEBUG: Fuel pump deposit: {{ first_variant.metafields.custom.deposit_for_high_pressure_fuel_pumps }} -->
-<!-- DEBUG: Injector deposit: {{ first_variant.metafields.custom.deposit_for_injectors }} -->  
-<!-- DEBUG: Fuel line deposit: {{ first_variant.metafields.custom.deposit_for_fuel_lines }} -->
+<!-- DEBUG: Number of fuel pumps: {{ first_variant.metafields.custom.number_of_high_pressure_fuel_pumps }} -->
+<!-- DEBUG: Number of injectors: {{ first_variant.metafields.custom.number_of_injectors }} -->  
+<!-- DEBUG: Number of fuel lines: {{ first_variant.metafields.custom.number_of_fuel_lines }} -->
 <!-- DEBUG: Calculated initial_deposit: {{ initial_deposit }} -->
 <!-- DEBUG: Individual amounts - Fuel pump: {{ fuel_pump_deposit }}, Injector: {{ injector_deposit }}, Fuel line: {{ fuel_line_deposit }} -->
 <script>
   window.productMetafields = window.productMetafields || {};
   {% for variant in product.variants %}
     {% comment %}DEBUG: Log what variant we're processing{% endcomment %}
-    {% comment %}Extract values using same JSON parsing method{% endcomment %}
-    {% assign fp_val = 0 %}
-    {% assign inj_val = 0 %}
-    {% assign fl_val = 0 %}
-    
-    {% if variant.metafields.custom.deposit_for_high_pressure_fuel_pumps %}
-      {% assign fp_val = variant.metafields.custom.deposit_for_high_pressure_fuel_pumps.value | divided_by: 100.0 %}
-    {% endif %}
-    
-    {% if variant.metafields.custom.deposit_for_injectors %}
-      {% assign inj_val = variant.metafields.custom.deposit_for_injectors.value | divided_by: 100.0 %}
-    {% endif %}
-    
-    {% if variant.metafields.custom.deposit_for_fuel_lines %}
-      {% assign fl_val = variant.metafields.custom.deposit_for_fuel_lines.value | divided_by: 100.0 %}
-    {% endif %}
+    {% comment %}Extract quantity values from Integer metafields{% endcomment %}
+    {% assign fp_qty = variant.metafields.custom.number_of_high_pressure_fuel_pumps | default: 0 %}
+    {% assign inj_qty = variant.metafields.custom.number_of_injectors | default: 0 %}
+    {% assign fl_qty = variant.metafields.custom.number_of_fuel_lines | default: 0 %}
     
     window.productMetafields["{{ variant.id }}"] = {
-      "fuel_pump_deposit": {{ fp_val }},
-      "injector_deposit": {{ inj_val }},
-      "fuel_line_deposit": {{ fl_val }}
+      "fuel_pump_quantity": {{ fp_qty }},
+      "injector_quantity": {{ inj_qty }},
+      "fuel_line_quantity": {{ fl_qty }}
     };
   {% endfor %}
   
@@ -314,9 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const variantMetafields = window.productMetafields?.[mainVariantId];
     if (!variantMetafields) return 0;
     
-    const fuelPumpDeposit = variantMetafields.fuel_pump_deposit || 0;
-    const injectorDeposit = variantMetafields.injector_deposit || 0;
-    const fuelLineDeposit = variantMetafields.fuel_line_deposit || 0;
+    const fuelPumpQuantity = variantMetafields.fuel_pump_quantity || 0;
+    const injectorQuantity = variantMetafields.injector_quantity || 0;
+    const fuelLineQuantity = variantMetafields.fuel_line_quantity || 0;
+    
+    // Calculate deposits: injectors × $100, fuel pumps × $200, fuel lines × $100
+    const fuelPumpDeposit = fuelPumpQuantity * 200;
+    const injectorDeposit = injectorQuantity * 100;
+    const fuelLineDeposit = fuelLineQuantity * 100;
     
     return fuelPumpDeposit + injectorDeposit + fuelLineDeposit;
   }
