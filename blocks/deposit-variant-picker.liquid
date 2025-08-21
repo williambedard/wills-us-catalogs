@@ -451,10 +451,17 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to calculate deposit amount from quantities only
   // Unit prices: Injectors $100, Fuel Lines $100, Fuel Pumps $200
   function calculateDepositAmount(mainVariantId) {
+    console.log('[CALC] Calculating deposit for variant:', mainVariantId);
+    console.log('[CALC] Available metafields:', window.productMetafields);
+    
     const variantMetafields = window.productMetafields?.[mainVariantId];
-    if (!variantMetafields || !variantMetafields.quantities) return 0;
+    if (!variantMetafields || !variantMetafields.quantities) {
+      console.log('[CALC] No metafields found for variant:', mainVariantId);
+      return 0;
+    }
     
     const quantities = variantMetafields.quantities;
+    console.log('[CALC] Found quantities:', quantities);
     
     // Calculate deposits from quantities using unit prices
     const injectorDeposit = (quantities.injectors || 0) * 100;
@@ -463,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const totalDeposit = injectorDeposit + fuelLineDeposit + fuelPumpDeposit;
     
-    console.log(`Deposit calculation for variant ${mainVariantId}:`, {
+    console.log(`[CALC] Deposit calculation for variant ${mainVariantId}:`, {
       quantities,
       unitPrices: { injectors: 100, fuel_lines: 100, fuel_pumps: 200 },
       deposits: { injectorDeposit, fuelLineDeposit, fuelPumpDeposit },
