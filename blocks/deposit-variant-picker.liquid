@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Validate deposit selection before form submission (cart logic will be handled elsewhere)
+  // Validate deposit selection before form submission
   const productFormElements = document.querySelectorAll('product-form form[action*="/cart/add"]');
   
   productFormElements.forEach(form => {
@@ -344,27 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      // DEBUG: Log what will be added to cart
-      const formData = new FormData(form);
-      const mainVariantId = formData.get('id');
-      const quantity = formData.get('quantity') || '1';
-      const selectedOptionElement = dropdown.querySelector('option:checked');
-      const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
-      const depositAmount = calculateDepositAmount(mainVariantId);
-      
-      // For products with deposit requirements, handle cart addition ourselves
-      if (selectedDepositOption !== 'return_cores_in_advance') {
-        e.preventDefault(); // Stop the theme from handling this
-        
-        console.log('[INTERCEPT] Taking over cart addition for deposit bundle');
-        
-        // Handle both main product and deposit addition
-        addProductsToCartWithDeposit(mainVariantId, parseInt(quantity), selectedDepositOption, depositVariantId, depositAmount);
-        return false;
-      }
-      
-      // For 'return_cores_in_advance', let the theme handle it normally
-      console.log('[NORMAL] Letting theme handle cart addition (no deposit)');
+      // Let the theme handle cart addition normally
+      console.log('[NORMAL] Form validation passed, letting theme handle cart addition');
     });
   });
   
