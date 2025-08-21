@@ -172,7 +172,7 @@ class CartItemsComponent extends Component {
       console.error(error);
     } finally {
       this.#enableCartItems();
-      cartPerformance.measureFromMarker(cartPerformaceUpdateMarker);
+      cartPerformance.measureFromMarker(cartPerformanceUpdateMarker);
     }
   }
 
