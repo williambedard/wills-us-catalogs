@@ -278,8 +278,8 @@ class CartItemsComponent extends Component {
             bundles[bundleId] = { main: null, deposit: null };
           }
           
-          // Determine if this is main or deposit product based on deposit_option or is_deposit property
-          if (item.properties?.deposit_option) {
+          // Determine if this is main or deposit product based on _deposit_option or _is_deposit property
+          if (item.properties?._deposit_option) {
             bundles[bundleId].main = { item, key: item.key };
           } else if (item.properties?._is_deposit === 'true') {
             bundles[bundleId].deposit = { item, key: item.key };
