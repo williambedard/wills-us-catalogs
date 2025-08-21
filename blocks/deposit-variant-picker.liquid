@@ -314,8 +314,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const bundleId = Date.now().toString();
       const depositQuantity = Math.ceil(depositAmount / 100);
       
-      // Get variant metafields for main product to add unit pricing to deposit
+      // Get variant metafields for main product
       const variantMetafields = window.productMetafields?.[mainVariantId];
+      
+      // Build main product properties
+      const mainProperties = {
+        '_bundle_id': bundleId,
+        'deposit_option': depositOption
+      };
+      
+      // Build deposit product properties
       const depositProperties = {
         '_deposit_for': 'main_product',
         '_bundle_id': bundleId,
@@ -324,16 +332,20 @@ document.addEventListener('DOMContentLoaded', function() {
         '_calculated_amount': '$' + depositAmount.toFixed(2)
       };
       
-      // Add unit pricing properties based on main product metafields
+      // Add component properties to both main and deposit products based on metafields
       if (variantMetafields?.quantities) {
         const quantities = variantMetafields.quantities;
+        
         if (quantities.injectors > 0) {
+          mainProperties['Injectors'] = `${quantities.injectors} units`;
           depositProperties['Injectors'] = '$100 per unit';
         }
         if (quantities.fuel_pumps > 0) {
+          mainProperties['High Pressure Fuel Pumps'] = `${quantities.fuel_pumps} units`;
           depositProperties['High Pressure Fuel Pumps'] = '$200 per unit';
         }
         if (quantities.fuel_lines > 0) {
+          mainProperties['Fuel Lines'] = `${quantities.fuel_lines} pieces`;
           depositProperties['Fuel Lines'] = '$100 per set';
         }
       }
@@ -342,10 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {
           id: parseInt(mainVariantId),
           quantity: parseInt(quantity),
-          properties: {
-            '_bundle_id': bundleId,
-            'deposit_option': depositOption
-          }
+          properties: mainProperties
         },
         {
           id: parseInt(depositVariantId), 
