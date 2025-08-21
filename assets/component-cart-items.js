@@ -351,6 +351,8 @@ class CartItemsComponent extends Component {
             if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
               morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
             }
+          } else {
+            console.error('Failed to update deposit quantity:', await changeResponse.text());
           }
         }
       }
