@@ -209,12 +209,10 @@ class CartDepositManager extends Component {
   #shouldMainProductHaveDeposit(mainItem) {
     if (!mainItem.properties) return false;
     
-    const paymentOption = mainItem.properties.payment_option;
-    const depositAmount = parseFloat(mainItem.properties.deposit_amount || '0');
+    const depositOption = mainItem.properties.deposit_option;
     
-    return paymentOption && 
-           paymentOption !== 'return_first' && 
-           depositAmount > 0;
+    return depositOption && 
+           depositOption !== 'return_cores_in_advance';
   }
 
   /**
@@ -336,11 +334,11 @@ class CartDepositManager extends Component {
    * @returns {object|null}
    */
   #findLinkedMainProduct(mainProductItems, depositItem) {
-    const mainVariantId = depositItem.properties?.main_product_variant;
-    if (!mainVariantId) return null;
+    const bundleId = depositItem.properties?.bundle_id;
+    if (!bundleId) return null;
     
     return mainProductItems.find(item => 
-      item.variant_id.toString() === mainVariantId
+      item.properties?.bundle_id === bundleId
     );
   }
 
@@ -351,8 +349,11 @@ class CartDepositManager extends Component {
    * @returns {object|null}
    */
   #findDepositForMainProduct(depositItems, mainItem) {
+    const bundleId = mainItem.properties?.bundle_id;
+    if (!bundleId) return null;
+    
     return depositItems.find(deposit =>
-      deposit.properties?.main_product_variant === mainItem.variant_id.toString()
+      deposit.properties?.bundle_id === bundleId
     );
   }
 
