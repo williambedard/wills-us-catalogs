@@ -261,11 +261,22 @@ class CartDepositManager extends Component {
    */
   #findLinkedMainProduct(mainProductItems, depositItem) {
     const bundleId = depositItem.properties?.bundle_id;
-    if (!bundleId) return null;
+    if (!bundleId) {
+      console.warn('Deposit item has no bundle_id:', depositItem.id);
+      return null;
+    }
     
-    return mainProductItems.find(item => 
+    const linkedMain = mainProductItems.find(item => 
       item.properties?.bundle_id === bundleId
     );
+    
+    if (!linkedMain) {
+      console.warn(`No main product found for bundle_id ${bundleId}. Available main products:`, 
+        mainProductItems.map(item => ({ id: item.id, bundle_id: item.properties?.bundle_id, _deposit_option: item.properties?._deposit_option }))
+      );
+    }
+    
+    return linkedMain;
   }
 
   /**
