@@ -19,6 +19,10 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   assign first_variant = product.selected_or_first_available_variant
   
   comment
+  # DEBUG: Check if deposit product is configured
+  endcomment
+  
+  comment
   # Only show if product has "has_deposit_options" tag
   endcomment
   assign show_deposit_options = false
@@ -45,6 +49,8 @@ Uses JSON string parsing for reliable MONEY metafield extraction
 
 {% comment %} Only expose and show if product has deposit options {% endcomment %}
 {% if show_deposit_options %}
+<!-- DEBUG: Deposit product from block settings: {{ deposit_product.id | default: 'NOT SET' }} -->
+<!-- DEBUG: Deposit product handle: {{ deposit_product.handle | default: 'NOT SET' }} -->
 <!-- DEBUG: Product has has_deposit_options tag -->
 <!-- DEBUG: First variant ID: {{ first_variant.id }} -->
 <!-- DEBUG: Number of injectors: {{ num_injectors }} -->
