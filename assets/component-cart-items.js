@@ -124,16 +124,28 @@ class CartItemsComponent extends Component {
       }
     });
 
+    // Get the cart item key for the line
+    const cartResponse = await fetch('/cart.js');
+    const cart = await cartResponse.json();
+    const cartItem = cart.items[line - 1]; // line is 1-indexed, array is 0-indexed
+    
+    if (!cartItem) {
+      console.error('Cart item not found for line:', line);
+      return;
+    }
+
+    const updates = {};
+    updates[cartItem.key] = quantity;
+
     const body = JSON.stringify({
-      line: line,
-      quantity: quantity,
+      updates: updates,
       sections: Array.from(sectionsToUpdate).join(','),
       sections_url: window.location.pathname,
     });
 
     cartTotal?.shimmer();
 
-    fetch(`${Theme.routes.cart_change_url}`, fetchConfig('json', { body }))
+    fetch(`${Theme.routes.cart_update_url}`, fetchConfig('json', { body }))
       .then((response) => {
         return response.text();
       })
