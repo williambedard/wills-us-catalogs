@@ -180,9 +180,9 @@ export default class VariantPicker extends Component {
       })
       .catch((error) => {
         if (error.name === 'AbortError') {
-          console.warn('Fetch aborted by user');
+          console.warn('Variant fetch aborted by user');
         } else {
-          console.error(error);
+          console.error('Variant picker error:', error);
         }
       });
   }
