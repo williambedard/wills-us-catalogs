@@ -76,7 +76,6 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     };
   {% endfor %}
   
-  console.log('Deposit system loaded for product:', '{{ product.id }}');
   
   
   // Function to update deposit amounts when variant changes
@@ -112,7 +111,6 @@ Uses JSON string parsing for reliable MONEY metafield extraction
       element.textContent = depositAmount.toFixed(2);
     });
     
-    console.log(`Updated deposit display for variant ${variantId}: $${depositAmount.toFixed(2)}`);
   }
   
   // Listen for variant changes from the theme's variant picker
@@ -382,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
       window.location.href = '/cart';
       
     } catch (error) {
-      console.error('[ERROR] Failed to add products:', error);
+      console.error('Failed to add products to cart:', error);
       alert('Failed to add to cart. Please try again.');
     }
   }
