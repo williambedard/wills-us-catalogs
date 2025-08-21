@@ -249,20 +249,20 @@
                       {%- endfor -%}
                       
                       {%- if is_main_product -%}
-                        {%- comment -%} Show variant metafields for main products {%- endcomment -%}
-                        {%- if item.variant.metafields.custom.number_of_injectors -%}
+                        {%- comment -%} Show variant metafields for main products (only non-zero values) {%- endcomment -%}
+                        {%- if item.variant.metafields.custom.number_of_injectors.value and item.variant.metafields.custom.number_of_injectors.value > 0 -%}
                           <div class="cart-items__properties">
                             <dt>Injectors:</dt>
                             <dd>{{ item.variant.metafields.custom.number_of_injectors.value }} units</dd>
                           </div>
                         {%- endif -%}
-                        {%- if item.variant.metafields.custom.number_of_fuel_lines -%}
+                        {%- if item.variant.metafields.custom.number_of_fuel_lines.value and item.variant.metafields.custom.number_of_fuel_lines.value > 0 -%}
                           <div class="cart-items__properties">
                             <dt>Fuel Lines:</dt>
                             <dd>{{ item.variant.metafields.custom.number_of_fuel_lines.value }} pieces</dd>
                           </div>
                         {%- endif -%}
-                        {%- if item.variant.metafields.custom.number_of_high_pressure_fuel_pumps -%}
+                        {%- if item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value and item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value > 0 -%}
                           <div class="cart-items__properties">
                             <dt>High Pressure Fuel Pumps:</dt>
                             <dd>{{ item.variant.metafields.custom.number_of_high_pressure_fuel_pumps.value }} units</dd>
