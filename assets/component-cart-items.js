@@ -108,7 +108,7 @@ class CartItemsComponent extends Component {
    * @param {number} config.quantity - The quantity.
    * @param {string} config.action - The action.
    */
-  updateQuantity(config) {
+  async updateQuantity(config) {
     const cartPerformaceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
 
     this.#disableCartItems();
@@ -124,28 +124,31 @@ class CartItemsComponent extends Component {
       }
     });
 
-    // Get the cart item key for the line
-    const cartResponse = await fetch('/cart.js');
-    const cart = await cartResponse.json();
-    const cartItem = cart.items[line - 1]; // line is 1-indexed, array is 0-indexed
-    
-    if (!cartItem) {
-      console.error('Cart item not found for line:', line);
-      return;
-    }
+    try {
+      // Get the cart item key for the line
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+      const cartItem = cart.items[line - 1]; // line is 1-indexed, array is 0-indexed
+      
+      if (!cartItem) {
+        console.error('Cart item not found for line:', line);
+        this.#enableCartItems();
+        return;
+      }
 
-    const updates = {};
-    updates[cartItem.key] = quantity;
+      const updates = {};
+      updates[cartItem.key] = quantity;
 
-    const body = JSON.stringify({
-      updates: updates,
-      sections: Array.from(sectionsToUpdate).join(','),
-      sections_url: window.location.pathname,
-    });
+      const body = JSON.stringify({
+        updates: updates,
+        sections: Array.from(sectionsToUpdate).join(','),
+        sections_url: window.location.pathname,
+      });
 
-    cartTotal?.shimmer();
+      cartTotal?.shimmer();
 
-    fetch(`${Theme.routes.cart_update_url}`, fetchConfig('json', { body }))
+      const response = await fetch(`${Theme.routes.cart_update_url}`, fetchConfig('json', { body }));
+      const responseText = await response.text();
       .then((response) => {
         return response.text();
       })
