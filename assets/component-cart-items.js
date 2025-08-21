@@ -166,8 +166,8 @@ class CartItemsComponent extends Component {
 
         morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
 
-        // Sync bundle quantities after successful cart update
-        this.#syncBundleQuantities();
+        // Bundle quantity sync is now handled by cart-deposit-manager.js
+        // this.#syncBundleQuantities();
       })
       .catch((error) => {
         console.error(error);
@@ -257,10 +257,12 @@ class CartItemsComponent extends Component {
   }
 
   /**
-   * Syncs bundle quantities for deposit products.
-   * Finds products with matching bundle_id and syncs deposit quantities to match main products.
+   * DISABLED: Bundle sync now handled by cart-deposit-manager.js
+   * This method was causing conflicts with the main deposit manager
    */
   async #syncBundleQuantities() {
+    // Disabled - cart-deposit-manager.js handles all bundle sync logic
+    return;
     try {
       // Get current cart using Shopify AJAX Cart API
       const cartResponse = await fetch('/cart.js');
