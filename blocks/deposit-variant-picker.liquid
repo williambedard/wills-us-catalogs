@@ -276,14 +276,21 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error('Failed to add main product');
           }
           
+          console.log('Main product added successfully');
+          
           // Second, add deposit product using AJAX
           const selectedOption = dropdown.querySelector('option:checked');
           const depositVariantId = selectedOption?.getAttribute('data-variant-id');
+          
+          console.log('Selected deposit variant ID:', depositVariantId);
           
           if (depositVariantId) {
             const depositAmount = calculateDepositAmount(mainVariantId);
             // Calculate deposit quantity: total deposit amount divided by $100 unit price
             const depositQuantity = Math.ceil(depositAmount / 100) * quantity;
+            
+            console.log('Calculated deposit amount:', depositAmount);
+            console.log('Calculated deposit quantity:', depositQuantity);
             
             // Get component quantities from metafields for display
             const variantMetafields = window.productMetafields?.[mainVariantId];
@@ -293,6 +300,8 @@ document.addEventListener('DOMContentLoaded', function() {
               '_deposit_unit_amount': depositAmount.toFixed(2),
               '_main_product_quantity': quantity
             };
+            
+            console.log('Deposit component props:', componentProps);
             
             // Add component deposit rates as visible properties (only if component exists)
             if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
