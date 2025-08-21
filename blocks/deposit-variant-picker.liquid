@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function addBothToCart(mainVariantId, quantity, depositVariantId, depositAmount, depositOption) {
     try {
       const bundleId = Date.now().toString();
-      const depositQuantity = Math.ceil(depositAmount / 100);
+      const depositQuantity = depositAmount / 100;
       
       // Get variant metafields for main product
       const variantMetafields = window.productMetafields?.[mainVariantId];
