@@ -299,14 +299,16 @@ class CartItemsComponent extends Component {
           
           if (deposit.item.quantity !== requiredDepositQuantity) {
             // Update deposit quantity to match calculated amount (including removal if main qty = 0)
+            const updates = {};
+            updates[deposit.key] = requiredDepositQuantity;
+            
             const body = JSON.stringify({
-              line: deposit.lineNumber,
-              quantity: requiredDepositQuantity,
+              updates: updates,
               sections: this.sectionId,
               sections_url: window.location.pathname,
             });
             
-            const changeResponse = await fetch('/cart/change.js', {
+            const changeResponse = await fetch('/cart/update.js', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
