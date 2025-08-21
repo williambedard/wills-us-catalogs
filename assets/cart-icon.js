@@ -5,30 +5,24 @@ import { ThemeEvents, CartUpdateEvent } from '@theme/events';
 /**
  * A custom element that displays a cart icon.
  *
- * @typedef {object} Refs
- * @property {HTMLElement} cartBubble - The cart bubble element.
- * @property {HTMLElement} cartBubbleText - The cart bubble text element.
- * @property {HTMLElement} cartBubbleCount - The cart bubble count element.
- *
- * @extends {Component<Refs>}
+ * @extends {Component}
  */
 class CartIcon extends Component {
-  requiredRefs = ['cartBubble', 'cartBubbleText', 'cartBubbleCount'];
+  requiredRefs = [];
 
   /** @type {number} */
   get currentCartCount() {
-    return parseInt(this.refs.cartBubbleCount.textContent ?? '0', 10);
+    return parseInt(sessionStorage.getItem('cart-count-value') ?? '0', 10);
   }
 
   set currentCartCount(value) {
-    this.refs.cartBubbleCount.textContent = value < 100 ? String(value) : '';
+    sessionStorage.setItem('cart-count-value', String(value));
   }
 
   connectedCallback() {
     super.connectedCallback();
 
     document.addEventListener(ThemeEvents.cartUpdate, this.onCartUpdate);
-    this.ensureCartBubbleIsCorrect();
   }
 
   disconnectedCallback() {
