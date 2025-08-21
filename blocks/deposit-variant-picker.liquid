@@ -221,7 +221,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if (dropdown) {
     dropdown.addEventListener('change', function() {
       const selectedOption = this.value;
+      const selectedOptionElement = this.querySelector('option:checked');
+      const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
       
+      // DEBUG: Log selected deposit variant
+      console.log('💰 Deposit option selected:', {
+        option: selectedOption,
+        variantId: depositVariantId,
+        variantTitle: selectedOptionElement?.textContent?.trim()
+      });
       
       this.classList.remove('invalid-selection');
       
