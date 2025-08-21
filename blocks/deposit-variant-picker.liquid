@@ -75,7 +75,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   
   // Hook into theme's cart events to add deposit product after main product
   document.addEventListener('cart:update', function(event) {
-    console.log('✅ Theme cart event working:', event.detail);
+    console.log('[OK] Theme cart event working:', event.detail);
     
     // Check if this is from our product form and needs deposit handling
     const isFromProductForm = event.detail?.data?.source === 'product-form-component';
@@ -92,7 +92,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     const selectedDepositOption = dropdown?.value;
     
     if (!selectedDepositOption || selectedDepositOption === 'return_cores_in_advance') {
-      console.log('🔄 Skipping deposit addition - no deposit required');
+      console.log('[SKIP] Skipping deposit addition - no deposit required');
       return;
     }
     
@@ -100,7 +100,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
     
     if (!depositVariantId) {
-      console.error('❌ No deposit variant ID found');
+      console.error('[ERROR] No deposit variant ID found');
       return;
     }
     
