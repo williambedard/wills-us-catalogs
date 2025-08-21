@@ -265,41 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Function to validate deposit selection and update button state
-  function validateDepositSelection() {
-    const depositPicker = document.querySelector('.deposit-variant-picker');
-    if (!depositPicker) return true; // No deposit picker, always valid
-    
-    const selectedOption = dropdown?.value;
-    const isValid = selectedOption && selectedOption !== '';
-    
-    // Find add to cart buttons more specifically
-    const addToCartButtons = document.querySelectorAll('.add-to-cart-button, button[name="add"], input[name="add"]');
-    
-    addToCartButtons.forEach(button => {
-      if (isValid) {
-        button.removeAttribute('disabled');
-        button.classList.remove('disabled');
-      } else {
-        button.setAttribute('disabled', 'disabled');
-        button.classList.add('disabled');
-      }
-    });
-    
-    return isValid;
-  }
-  
-  // Run validation on page load to handle back navigation
-  document.addEventListener('DOMContentLoaded', function() {
-    // Small delay to ensure dropdown value is set by browser
-    setTimeout(validateDepositSelection, 100);
-  });
-  
-  // Listen for dropdown changes to validate in real-time  
-  if (dropdown) {
-    dropdown.addEventListener('change', validateDepositSelection);
-  }
-
   // Handle form submission with deposit products
   const productFormElements = document.querySelectorAll('product-form form[action*="/cart/add"]');
   
