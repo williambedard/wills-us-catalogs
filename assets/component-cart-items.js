@@ -292,11 +292,16 @@ class CartItemsComponent extends Component {
         const { main, deposit } = bundle;
         
         if (main && deposit) {
-          if (main.item.quantity !== deposit.item.quantity) {
-            // Update deposit quantity to match main product (including removal if main qty = 0)
+          // Calculate required deposit quantity based on deposit amount and main product quantity
+          const depositUnitAmount = parseFloat(deposit.item.properties?._deposit_unit_amount || '0');
+          const totalDepositAmount = depositUnitAmount * main.item.quantity;
+          const requiredDepositQuantity = Math.ceil(totalDepositAmount / 100);
+          
+          if (deposit.item.quantity !== requiredDepositQuantity) {
+            // Update deposit quantity to match calculated amount (including removal if main qty = 0)
             const body = JSON.stringify({
               line: deposit.lineNumber,
-              quantity: main.item.quantity,
+              quantity: requiredDepositQuantity,
               sections: this.sectionId,
               sections_url: window.location.pathname,
             });
