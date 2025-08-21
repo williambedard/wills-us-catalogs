@@ -53,6 +53,7 @@
     "button_font_weight_secondary": "default",
     "cart_type": "drawer",
     "cart_price_font": "secondary",
+    "auto_open_cart_drawer": true,
     "show_cart_note": false,
     "show_add_discount_code": true,
     "drawer_drop_shadow": true,
@@ -92,11 +93,6 @@
           "fees_required_message": "",
           "fees_consent_description": ""
         }
-      },
-      "316487575649303945": {
-        "type": "shopify://apps/easify-options/blocks/app-embed-block/d2288b18-c1ba-42f5-b3b3-26c75c8820bf",
-        "disabled": false,
-        "settings": {}
       }
     },
     "color_schemes": {
