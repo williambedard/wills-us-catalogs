@@ -292,11 +292,18 @@ class CartItemsComponent extends Component {
         const { main, deposit } = bundle;
         
         if (main && deposit) {
-          if (main.item.quantity !== deposit.item.quantity) {
-            // Update deposit quantity to match main product (including removal if main qty = 0)
+          // Calculate what the deposit quantity should be based on main product quantity
+          // We need to determine the original ratio between deposit and main product
+          
+          // Get the initial deposit amount per main product unit
+          const depositAmountPerUnit = this.#calculateDepositPerUnit(deposit.item);
+          const expectedDepositQuantity = main.item.quantity * depositAmountPerUnit;
+          
+          if (deposit.item.quantity !== expectedDepositQuantity) {
+            // Update deposit quantity based on multiplier (including removal if main qty = 0)
             const body = JSON.stringify({
               line: deposit.lineNumber,
-              quantity: main.item.quantity,
+              quantity: expectedDepositQuantity,
               sections: this.sectionId,
               sections_url: window.location.pathname,
             });
@@ -350,6 +357,28 @@ class CartItemsComponent extends Component {
     } catch (error) {
       console.error('Error syncing bundle quantities:', error);
     }
+  }
+
+  /**
+   * Calculate the deposit quantity per main product unit based on the _calculated_amount property
+   * @param {Object} depositItem - The deposit cart item
+   * @returns {number} - The deposit quantity that should exist per main product unit
+   */
+  #calculateDepositPerUnit(depositItem) {
+    // Get the calculated amount from deposit item properties (e.g., "$900.00")
+    const calculatedAmount = depositItem.properties?._calculated_amount;
+    if (!calculatedAmount) {
+      // Fallback: assume 1:1 ratio if no calculated amount found
+      return 1;
+    }
+    
+    // Extract numeric amount (remove $ and convert to number)
+    const depositAmountDollars = parseFloat(calculatedAmount.replace('$', '').replace(',', ''));
+    
+    // Calculate deposit quantity: amount / 100 (since deposit variants are $1 each, rounded up)
+    const depositQuantityPerUnit = Math.ceil(depositAmountDollars / 100);
+    
+    return depositQuantityPerUnit;
   }
 }
 
