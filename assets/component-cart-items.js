@@ -110,9 +110,10 @@ class CartItemsComponent extends Component {
    */
   async updateQuantity(config) {
     const { line, quantity } = config;
+    let cartPerformanceUpdateMarker;
     
     try {
-      const cartPerformanceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
+      cartPerformanceUpdateMarker = cartPerformance.createStartingMarker(`${config.action}:user-action`);
       this.#disableCartItems();
       
       const { cartTotal } = this.refs;
@@ -125,23 +126,33 @@ class CartItemsComponent extends Component {
         }
       });
 
-      // Use line-based update instead of key-based
+      // Debug the line parameter
+      console.log('Updating cart line:', line, 'to quantity:', quantity);
+
+      // Use line-based update - ensure line is an integer
       const body = JSON.stringify({
-        line: line,
-        quantity: quantity,
+        line: parseInt(line, 10),
+        quantity: parseInt(quantity, 10),
         sections: Array.from(sectionsToUpdate).join(','),
         sections_url: window.location.pathname,
       });
+
+      console.log('Cart change request body:', body);
 
       cartTotal?.shimmer();
 
       const response = await fetch(`${Theme.routes.cart_change_url}`, fetchConfig('json', { body }));
       const responseText = await response.text();
+      
+      console.log('Cart change response status:', response.status);
+      console.log('Cart change response:', responseText);
+      
       const parsedResponseText = JSON.parse(responseText);
 
       resetShimmer(this);
 
       if (parsedResponseText.errors) {
+        console.error('Cart change errors:', parsedResponseText.errors);
         this.#handleCartError(line, parsedResponseText);
         return;
       }
@@ -169,10 +180,12 @@ class CartItemsComponent extends Component {
       // this.#syncBundleQuantities();
       
     } catch (error) {
-      console.error(error);
+      console.error('Cart update error:', error);
     } finally {
       this.#enableCartItems();
-      cartPerformance.measureFromMarker(cartPerformanceUpdateMarker);
+      if (cartPerformanceUpdateMarker) {
+        cartPerformance.measureFromMarker(cartPerformanceUpdateMarker);
+      }
     }
   }
 
