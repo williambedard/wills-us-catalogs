@@ -149,48 +149,43 @@ class CartItemsComponent extends Component {
 
       const response = await fetch(`${Theme.routes.cart_update_url}`, fetchConfig('json', { body }));
       const responseText = await response.text();
-      .then((response) => {
-        return response.text();
-      })
-      .then((responseText) => {
-        const parsedResponseText = JSON.parse(responseText);
+      const parsedResponseText = JSON.parse(responseText);
 
-        resetShimmer(this);
+      resetShimmer(this);
 
-        if (parsedResponseText.errors) {
-          this.#handleCartError(line, parsedResponseText);
-          return;
-        }
+      if (parsedResponseText.errors) {
+        this.#handleCartError(line, parsedResponseText);
+        return;
+      }
 
-        const newSectionHTML = new DOMParser().parseFromString(
-          parsedResponseText.sections[this.sectionId],
-          'text/html'
-        );
+      const newSectionHTML = new DOMParser().parseFromString(
+        parsedResponseText.sections[this.sectionId],
+        'text/html'
+      );
 
-        // Grab the new cart item count from a hidden element
-        const newCartHiddenItemCount = newSectionHTML.querySelector('[ref="cartItemCount"]')?.textContent;
-        const newCartItemCount = newCartHiddenItemCount ? parseInt(newCartHiddenItemCount, 10) : 0;
+      // Grab the new cart item count from a hidden element
+      const newCartHiddenItemCount = newSectionHTML.querySelector('[ref="cartItemCount"]')?.textContent;
+      const newCartItemCount = newCartHiddenItemCount ? parseInt(newCartHiddenItemCount, 10) : 0;
 
-        this.dispatchEvent(
-          new CartUpdateEvent({}, this.sectionId, {
-            itemCount: newCartItemCount,
-            source: 'cart-items-component',
-            sections: parsedResponseText.sections,
-          })
-        );
+      this.dispatchEvent(
+        new CartUpdateEvent({}, this.sectionId, {
+          itemCount: newCartItemCount,
+          source: 'cart-items-component',
+          sections: parsedResponseText.sections,
+        })
+      );
 
-        morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
+      morphSection(this.sectionId, parsedResponseText.sections[this.sectionId]);
 
-        // Bundle quantity sync is now handled by cart-deposit-manager.js
-        // this.#syncBundleQuantities();
-      })
-      .catch((error) => {
-        console.error(error);
-      })
-      .finally(() => {
-        this.#enableCartItems();
-        cartPerformance.measureFromMarker(cartPerformaceUpdateMarker);
-      });
+      // Bundle quantity sync is now handled by cart-deposit-manager.js
+      // this.#syncBundleQuantities();
+      
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.#enableCartItems();
+      cartPerformance.measureFromMarker(cartPerformaceUpdateMarker);
+    }
   }
 
   /**
