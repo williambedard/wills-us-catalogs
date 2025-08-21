@@ -291,6 +291,27 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
+      // DEBUG: Log what will be added to cart
+      const formData = new FormData(form);
+      const mainVariantId = formData.get('id');
+      const quantity = formData.get('quantity') || '1';
+      const selectedOptionElement = dropdown.querySelector('option:checked');
+      const depositVariantId = selectedOptionElement?.getAttribute('data-variant-id');
+      const depositAmount = calculateDepositAmount(mainVariantId);
+      
+      console.log('🛒 Form submission - will add to cart:', {
+        mainProduct: {
+          variantId: mainVariantId,
+          quantity: parseInt(quantity)
+        },
+        depositProduct: {
+          option: selectedDepositOption,
+          variantId: depositVariantId,
+          calculatedAmount: depositAmount,
+          skipDeposit: selectedDepositOption === 'return_cores_in_advance'
+        }
+      });
+      
       // Let the form submit normally - theme will handle cart addition
     });
   });
