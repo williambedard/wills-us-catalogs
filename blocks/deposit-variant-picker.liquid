@@ -35,9 +35,9 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     assign num_fuel_lines = first_variant.metafields.custom.number_of_fuel_lines.value | default: 0
     assign num_fuel_pumps = first_variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | default: 0
     
-    assign injector_total = num_injectors | times: 100
-    assign fuel_line_total = num_fuel_lines | times: 100
-    assign fuel_pump_total = num_fuel_pumps | times: 200
+    assign injector_total = num_injectors | times: 10000
+    assign fuel_line_total = num_fuel_lines | times: 10000
+    assign fuel_pump_total = num_fuel_pumps | times: 20000
     
     assign initial_deposit = injector_total | plus: fuel_line_total | plus: fuel_pump_total
   endif
@@ -61,9 +61,9 @@ Uses JSON string parsing for reliable MONEY metafield extraction
     {% assign num_fl = variant.metafields.custom.number_of_fuel_lines.value | default: 0 %}
     {% assign num_fp = variant.metafields.custom.number_of_high_pressure_fuel_pumps.value | default: 0 %}
     
-    {% assign inj_total = num_inj | times: 100 %}
-    {% assign fl_total = num_fl | times: 100 %}
-    {% assign fp_total = num_fp | times: 200 %}
+    {% assign inj_total = num_inj | times: 10000 %}
+    {% assign fl_total = num_fl | times: 10000 %}
+    {% assign fp_total = num_fp | times: 20000 %}
     
     window.productMetafields["{{ variant.id }}"] = {
       "fuel_pump_deposit": {{ fp_total | divided_by: 100.0 }},
@@ -141,7 +141,7 @@ Uses JSON string parsing for reliable MONEY metafield extraction
   {% if block.settings.show_amount %}
     <p class="deposit-amount-display">
       {{ block.settings.amount_label }}: 
-      <strong class="deposit-amount" data-initial-amount="{{ initial_deposit | divided_by: 100.0 | round: 2 }}">${{ initial_deposit | divided_by: 100.0 | round: 2 }}</strong>
+      <strong class="deposit-amount" data-initial-amount="{{ initial_deposit | money_without_currency }}">${{ initial_deposit | money_without_currency }}</strong>
     </p>
   {% endif %}
 
