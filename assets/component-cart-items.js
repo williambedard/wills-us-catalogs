@@ -380,8 +380,8 @@ class CartItemsComponent extends Component {
     // Extract numeric amount (remove $ and convert to number)
     const depositAmountDollars = parseFloat(calculatedAmount.replace('$', '').replace(',', ''));
     
-    // Calculate deposit quantity: amount / 100 (since deposit variants are $1 each, rounded up)
-    const depositQuantityPerUnit = Math.ceil(depositAmountDollars / 100);
+    // Calculate deposit quantity: amount / 100 (since deposit variants are $100 each)
+    const depositQuantityPerUnit = depositAmountDollars / 100;
     
     return depositQuantityPerUnit;
   }
