@@ -81,7 +81,7 @@ class CartDepositManager extends Component {
    * Schedule validation to avoid excessive API calls
    * @param {number} delay - Delay in milliseconds
    */
-  #scheduleValidation(delay = 100) {
+  #scheduleValidation(delay = 500) {
     if (this.#validationTimeout) {
       clearTimeout(this.#validationTimeout);
     }
@@ -167,9 +167,9 @@ class CartDepositManager extends Component {
       
       if (!linkedMain) {
         // Remove orphaned deposit
+        console.warn(`Removing deposit ${depositItem.id} - no linked main product found with bundle_id: ${depositItem.properties?.bundle_id}`);
         updates[depositItem.key] = 0;
         needsUpdate = true;
-        // Remove orphaned deposit (silent)
       }
     }
     
