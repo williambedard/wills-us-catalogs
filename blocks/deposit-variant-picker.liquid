@@ -280,15 +280,15 @@ document.addEventListener('DOMContentLoaded', function() {
               '_main_product_quantity': quantity
             };
             
-            // Add component quantities as visible properties (multiplied by main product quantity)
+            // Add component deposit rates as visible properties (only if component exists)
             if (variantMetafields?.injector_quantity && variantMetafields.injector_quantity > 0) {
-              componentProps['Injectors'] = (variantMetafields.injector_quantity * quantity) + ' @ $100 each';
+              componentProps['Injectors deposit'] = '$100 each';
             }
             if (variantMetafields?.fuel_pump_quantity && variantMetafields.fuel_pump_quantity > 0) {
-              componentProps['Fuel Pumps'] = (variantMetafields.fuel_pump_quantity * quantity) + ' @ $200 each';
+              componentProps['Fuel pumps deposit'] = '$200 each';
             }
             if (variantMetafields?.fuel_line_quantity && variantMetafields.fuel_line_quantity > 0) {
-              componentProps['Fuel Lines'] = (variantMetafields.fuel_line_quantity * quantity) + ' @ $100 each';
+              componentProps['Fuel lines deposit'] = '$100 each';
             }
             
             const depositResponse = await fetch('/cart/add.js', {
