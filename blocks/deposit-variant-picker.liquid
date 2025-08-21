@@ -254,11 +254,11 @@ Uses JSON string parsing for reliable MONEY metafield extraction
           <option value="{{ variant.title | downcase | replace: ' ', '_' }}" 
                   data-variant-id="{{ variant.id }}">
             {% case variant.title %}
-              {% when 'Credit card on file' %}
+              {% when 'Credit Card on File' %}
                 {{ block.settings.option1_label | default: variant.title }} - Hold $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
-              {% when 'Pay core deposit upfront' %}
+              {% when 'Pay Core Deposit' %}
                 {{ block.settings.option2_label | default: variant.title }} - Pay $<span class="deposit-total-inline">{{ initial_deposit | money_without_currency }}</span>
-              {% when 'Return cores in advance' %}
+              {% when 'Return Cores in Advance' %}
                 {{ block.settings.option3_label | default: variant.title }} - No deposit required
               {% else %}
                 {{ variant.title }}
