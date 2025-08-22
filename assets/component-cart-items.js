@@ -259,8 +259,8 @@ class CartItemsComponent extends Component {
   }
 
   /**
-   * Syncs parent-child quantities for deposit products using Shopify's nested cart lines.
-   * Finds deposit products with parent relationships and syncs quantities to match main products.
+   * Syncs bundle quantities for deposit products.
+   * Finds products with matching bundle_id and syncs deposit quantities to match main products.
    */
   async #syncBundleQuantities() {
     try {
@@ -271,35 +271,29 @@ class CartItemsComponent extends Component {
       }
       const cart = await cartResponse.json();
       
-      // Group items by parent-child relationships
-      const parentChildPairs = [];
+      // Group items by bundle_id
+      const bundles = {};
       cart.items.forEach((item, index) => {
-        // Check if this item is a child (deposit) with a parent relationship
-        if (item.parent_relationship?.parent_key && item.properties?._is_deposit_product === 'true') {
-          const parentKey = item.parent_relationship.parent_key;
+        const bundleId = item.properties?._bundle_id;
+        if (bundleId) {
+          if (!bundles[bundleId]) {
+            bundles[bundleId] = { main: null, deposit: null };
+          }
           
-          // Find the parent item by its key
-          const parentIndex = cart.items.findIndex(parent => parent.key === parentKey);
-          if (parentIndex !== -1) {
-            const parent = cart.items[parentIndex];
-            parentChildPairs.push({
-              main: { item: parent, lineNumber: parentIndex + 1 }, // Shopify cart lines are 1-indexed
-              deposit: { item, lineNumber: index + 1 }
-            });
+          // Determine if this is main or deposit product based on deposit_option or _is_deposit_product property
+          if (item.properties?.deposit_option && item.properties?._is_deposit_product !== 'true') {
+            bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
+          } else if (item.properties?._is_deposit_product === 'true') {
+            bundles[bundleId].deposit = { item, lineNumber: index + 1 };
           }
         }
       });
       
-      // Check each parent-child pair for quantity mismatches and handle removals
-      for (const { main, deposit } of parentChildPairs) {
+      // Check each bundle for quantity mismatches and handle removals
+      for (const [bundleId, bundle] of Object.entries(bundles)) {
+        const { main, deposit } = bundle;
         
         if (main && deposit) {
-          // Skip sync if parent quantity is 0 - let Shopify handle nested removal automatically
-          if (main.item.quantity === 0) {
-            console.log('Parent quantity is 0, skipping sync - Shopify will handle nested removal');
-            continue;
-          }
-          
           // Calculate what the deposit quantity should be based on main product quantity
           // We need to determine the original ratio between deposit and main product
           
@@ -308,7 +302,7 @@ class CartItemsComponent extends Component {
           const expectedDepositQuantity = main.item.quantity * depositAmountPerUnit;
           
           if (deposit.item.quantity !== expectedDepositQuantity) {
-            // Update deposit quantity based on multiplier
+            // Update deposit quantity based on multiplier (including removal if main qty = 0)
             const body = JSON.stringify({
               line: deposit.lineNumber,
               quantity: expectedDepositQuantity,
@@ -334,50 +328,39 @@ class CartItemsComponent extends Component {
               }
             }
           }
-        }
-      
-      // Handle orphaned deposits - find any deposit products without valid parent relationships
-      // Note: With nested cart lines, Shopify should automatically handle parent/child removal,
-      // but we keep this as a safety check for edge cases
-      const orphanedDeposits = cart.items.filter((item, index) => 
-        item.properties?._is_deposit_product === 'true' && 
-        (!item.parent_relationship?.parent_key || 
-         !cart.items.some(parent => parent.key === item.parent_relationship.parent_key))
-      );
-      
-      for (const orphanedDeposit of orphanedDeposits) {
-        const depositIndex = cart.items.indexOf(orphanedDeposit);
-        console.log(`Removing orphaned deposit: line ${depositIndex + 1}, variant ${orphanedDeposit.variant_id}`);
-        
-        const body = JSON.stringify({
-          line: depositIndex + 1, // Shopify cart lines are 1-indexed
-          quantity: 0,
-          sections: this.sectionId,
-          sections_url: window.location.pathname,
-        });
-        
-        const changeResponse = await fetch('/cart/change.js', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: body
-        });
-        
-        if (changeResponse.ok) {
-          // Re-render this section to reflect the change
-          const responseText = await changeResponse.text();
-          const parsedResponse = JSON.parse(responseText);
-          if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
-            morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
+        } else if (!main && deposit) {
+          // Remove orphaned deposit product
+          console.log(`Removing orphaned deposit: line ${deposit.lineNumber}, bundle ${bundleId}`);
+          const body = JSON.stringify({
+            line: deposit.lineNumber,
+            quantity: 0,
+            sections: this.sectionId,
+            sections_url: window.location.pathname,
+          });
+          
+          const changeResponse = await fetch('/cart/change.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body
+          });
+          
+          if (changeResponse.ok) {
+            // Re-render this section to reflect the change
+            const responseText = await changeResponse.text();
+            const parsedResponse = JSON.parse(responseText);
+            if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
+              morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
+            }
+          } else {
+            console.error('Failed to remove orphaned deposit:', await changeResponse.text());
           }
-        } else {
-          console.error('Failed to remove orphaned deposit:', await changeResponse.text());
         }
       }
     } catch (error) {
-      console.error('Error syncing parent-child quantities:', error);
+      console.error('Error syncing bundle quantities:', error);
     }
   }
 
