@@ -409,20 +409,20 @@ class CartItemsComponent extends Component {
     const updatedProperties = { ...mainItem.properties };
     
     if (baseInjectors > 0) {
-      updatedProperties['Injectors'] = `${baseInjectors * mainItem.quantity}`;
+      updatedProperties['Injectors Total'] = `${baseInjectors * mainItem.quantity}`;
     }
     if (baseFuelPumps > 0) {
-      updatedProperties['High Pressure Fuel Pumps'] = `${baseFuelPumps * mainItem.quantity} units`;
+      updatedProperties['High Pressure Fuel Pumps Total'] = `${baseFuelPumps * mainItem.quantity} units`;
     }
     if (baseFuelLines > 0) {
-      updatedProperties['Fuel Lines'] = `${baseFuelLines * mainItem.quantity}`;
+      updatedProperties['Fuel Lines Total'] = `${baseFuelLines * mainItem.quantity}`;
     }
     
     // Check if properties actually need updating
     const needsUpdate = 
-      (baseInjectors > 0 && updatedProperties['Injectors'] !== mainItem.properties?.Injectors) ||
-      (baseFuelPumps > 0 && updatedProperties['High Pressure Fuel Pumps'] !== mainItem.properties?.['High Pressure Fuel Pumps']) ||
-      (baseFuelLines > 0 && updatedProperties['Fuel Lines'] !== mainItem.properties?.['Fuel Lines']);
+      (baseInjectors > 0 && updatedProperties['Injectors Total'] !== mainItem.properties?.['Injectors Total']) ||
+      (baseFuelPumps > 0 && updatedProperties['High Pressure Fuel Pumps Total'] !== mainItem.properties?.['High Pressure Fuel Pumps Total']) ||
+      (baseFuelLines > 0 && updatedProperties['Fuel Lines Total'] !== mainItem.properties?.['Fuel Lines Total']);
     
     if (needsUpdate) {
       const body = JSON.stringify({
