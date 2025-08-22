@@ -294,6 +294,12 @@ class CartItemsComponent extends Component {
       for (const { main, deposit } of parentChildPairs) {
         
         if (main && deposit) {
+          // Skip sync if parent quantity is 0 - let Shopify handle nested removal automatically
+          if (main.item.quantity === 0) {
+            console.log('Parent quantity is 0, skipping sync - Shopify will handle nested removal');
+            continue;
+          }
+          
           // Calculate what the deposit quantity should be based on main product quantity
           // We need to determine the original ratio between deposit and main product
           
@@ -302,7 +308,7 @@ class CartItemsComponent extends Component {
           const expectedDepositQuantity = main.item.quantity * depositAmountPerUnit;
           
           if (deposit.item.quantity !== expectedDepositQuantity) {
-            // Update deposit quantity based on multiplier (including removal if main qty = 0)
+            // Update deposit quantity based on multiplier
             const body = JSON.stringify({
               line: deposit.lineNumber,
               quantity: expectedDepositQuantity,
