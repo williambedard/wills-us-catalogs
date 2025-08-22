@@ -328,6 +328,10 @@ class CartItemsComponent extends Component {
               }
             }
           }
+          
+          // Update main product properties to reflect quantity multiplier
+          await this.#updateMainProductProperties(main.item, main.lineNumber);
+          
         } else if (!main && deposit) {
           // Remove orphaned deposit product
           console.log(`Removing orphaned deposit: line ${deposit.lineNumber}, bundle ${bundleId}`);
