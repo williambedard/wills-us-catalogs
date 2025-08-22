@@ -65,6 +65,7 @@
     "currency_code_enabled_product_pages": false,
     "currency_code_enabled_product_cards": true,
     "currency_code_enabled_cart_items": false,
+    "quick_add": false,
     "product_corner_radius": 0,
     "card_corner_radius": 4,
     "show_variant_image": false,
@@ -76,16 +77,6 @@
     "variant_button_width": "equal-width-buttons",
     "content_for_index": [],
     "blocks": {
-      "16256948136948485038": {
-        "type": "shopify://apps/upcharge-surcharges/blocks/app-embed-block/3660e544-1847-4d53-9b3b-f0cb50c2d9f7",
-        "disabled": true,
-        "settings": {}
-      },
-      "3720565183479497137": {
-        "type": "shopify://apps/globo-product-option/blocks/app-embed-block/fdc9fad5-1a0f-4bd4-9c8a-1af6a6eef6b8",
-        "disabled": true,
-        "settings": {}
-      },
       "12622292715052272319": {
         "type": "shopify://apps/magical-product-fees/blocks/magical-mandatory-fees/8c765569-e503-4260-ade8-582a0959d5a2",
         "disabled": false,
