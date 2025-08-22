@@ -259,8 +259,8 @@ class CartItemsComponent extends Component {
   }
 
   /**
-   * Syncs bundle quantities for deposit products.
-   * Finds products with matching bundle_id and syncs deposit quantities to match main products.
+   * Syncs parent-child quantities for deposit products using Shopify's nested cart lines.
+   * Finds deposit products with parent relationships and syncs quantities to match main products.
    */
   async #syncBundleQuantities() {
     try {
@@ -271,27 +271,27 @@ class CartItemsComponent extends Component {
       }
       const cart = await cartResponse.json();
       
-      // Group items by bundle_id
-      const bundles = {};
+      // Group items by parent-child relationships
+      const parentChildPairs = [];
       cart.items.forEach((item, index) => {
-        const bundleId = item.properties?._bundle_id;
-        if (bundleId) {
-          if (!bundles[bundleId]) {
-            bundles[bundleId] = { main: null, deposit: null };
-          }
+        // Check if this item is a child (deposit) with a parent relationship
+        if (item.parent_relationship?.parent_key && item.properties?._is_deposit_product === 'true') {
+          const parentKey = item.parent_relationship.parent_key;
           
-          // Determine if this is main or deposit product based on deposit_option or _is_deposit_product property
-          if (item.properties?.deposit_option && item.properties?._is_deposit_product !== 'true') {
-            bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
-          } else if (item.properties?._is_deposit_product === 'true') {
-            bundles[bundleId].deposit = { item, lineNumber: index + 1 };
+          // Find the parent item by its key
+          const parentIndex = cart.items.findIndex(parent => parent.key === parentKey);
+          if (parentIndex !== -1) {
+            const parent = cart.items[parentIndex];
+            parentChildPairs.push({
+              main: { item: parent, lineNumber: parentIndex + 1 }, // Shopify cart lines are 1-indexed
+              deposit: { item, lineNumber: index + 1 }
+            });
           }
         }
       });
       
-      // Check each bundle for quantity mismatches and handle removals
-      for (const [bundleId, bundle] of Object.entries(bundles)) {
-        const { main, deposit } = bundle;
+      // Check each parent-child pair for quantity mismatches and handle removals
+      for (const { main, deposit } of parentChildPairs) {
         
         if (main && deposit) {
           // Calculate what the deposit quantity should be based on main product quantity
