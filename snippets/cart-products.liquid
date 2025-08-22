@@ -198,8 +198,8 @@
                             {%- comment -%} Hide bundle_id from UI {%- endcomment -%}
                             {%- assign show_property = false -%}
                             
-                          {%- elsif property.first == 'deposit_option' -%}
-                            {%- comment -%} Hide deposit_option from UI {%- endcomment -%}
+                          {%- elsif property.first == '_deposit_option' -%}
+                            {%- comment -%} Hide _deposit_option from UI {%- endcomment -%}
                             {%- assign show_property = false -%}
                             
                           {%- elsif property_first_char != '_' -%}
