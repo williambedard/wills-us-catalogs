@@ -195,21 +195,12 @@
                         
                         {%- if property.last != blank -%}
                           {%- if property.first == '_bundle_id' -%}
-                            {%- assign show_property = true -%}
-                            {%- assign display_key = 'Bundle ID' -%}
+                            {%- comment -%} Hide bundle_id from UI {%- endcomment -%}
+                            {%- assign show_property = false -%}
                             
                           {%- elsif property.first == 'deposit_option' -%}
-                            {%- unless item.properties._is_deposit_product -%}
-                              {%- assign show_property = true -%}
-                              {%- assign display_key = 'Deposit Payment' -%}
-                              {%- if property.last == 'credit_card_on_file' -%}
-                                {%- assign display_value = 'Credit Card on File' -%}
-                              {%- elsif property.last == 'pay_core_deposit' -%}
-                                {%- assign display_value = 'Pay Core Deposit' -%}
-                              {%- elsif property.last == 'return_cores_in_advance' -%}
-                                {%- assign display_value = 'Return Cores in Advance' -%}
-                              {%- endif -%}
-                            {%- endunless -%}
+                            {%- comment -%} Hide deposit_option from UI {%- endcomment -%}
+                            {%- assign show_property = false -%}
                             
                           {%- elsif property_first_char != '_' -%}
                             {%- assign show_property = true -%}
