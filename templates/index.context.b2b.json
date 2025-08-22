@@ -12,5 +12,16 @@
   "context": {
     "b2b": true
   },
-  "sections": {}
+  "sections": {
+    "hero_jVaWmY": {
+      "settings": {},
+      "blocks": {
+        "text_iXYWz6": {
+          "settings": {
+            "text": "<h2>Welcome to your portal.</h2>"
+          }
+        }
+      }
+    }
+  }
 }
