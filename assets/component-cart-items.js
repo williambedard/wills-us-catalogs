@@ -328,37 +328,49 @@ class CartItemsComponent extends Component {
               }
             }
           }
-        } else if (!main && deposit) {
-          // Remove orphaned deposit product
-          console.log(`Removing orphaned deposit: line ${deposit.lineNumber}, bundle ${bundleId}`);
-          const body = JSON.stringify({
-            line: deposit.lineNumber,
-            quantity: 0,
-            sections: this.sectionId,
-            sections_url: window.location.pathname,
-          });
-          
-          const changeResponse = await fetch('/cart/change.js', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: body
-          });
-          
-          if (changeResponse.ok) {
-            // Re-render this section to reflect the change
-            const responseText = await changeResponse.text();
-            const parsedResponse = JSON.parse(responseText);
-            if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
-              morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
-            }
-          } else {
-            console.error('Failed to remove orphaned deposit:', await changeResponse.text());
+        }
+      
+      // Handle orphaned deposits - find any deposit products without valid parent relationships
+      // Note: With nested cart lines, Shopify should automatically handle parent/child removal,
+      // but we keep this as a safety check for edge cases
+      const orphanedDeposits = cart.items.filter((item, index) => 
+        item.properties?._is_deposit_product === 'true' && 
+        (!item.parent_relationship?.parent_key || 
+         !cart.items.some(parent => parent.key === item.parent_relationship.parent_key))
+      );
+      
+      for (const orphanedDeposit of orphanedDeposits) {
+        const depositIndex = cart.items.indexOf(orphanedDeposit);
+        console.log(`Removing orphaned deposit: line ${depositIndex + 1}, variant ${orphanedDeposit.variant_id}`);
+        
+        const body = JSON.stringify({
+          line: depositIndex + 1, // Shopify cart lines are 1-indexed
+          quantity: 0,
+          sections: this.sectionId,
+          sections_url: window.location.pathname,
+        });
+        
+        const changeResponse = await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: body
+        });
+        
+        if (changeResponse.ok) {
+          // Re-render this section to reflect the change
+          const responseText = await changeResponse.text();
+          const parsedResponse = JSON.parse(responseText);
+          if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
+            morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
           }
+        } else {
+          console.error('Failed to remove orphaned deposit:', await changeResponse.text());
         }
       }
+    }
     } catch (error) {
       console.error('Error syncing bundle quantities:', error);
     }
