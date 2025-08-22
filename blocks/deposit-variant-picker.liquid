@@ -357,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {
           id: parseInt(depositVariantId), 
           quantity: depositQuantity,
+          parent_id: parseInt(mainVariantId), // Visual nesting only - bundle_id handles logic
           properties: depositProperties
         }
       ];
