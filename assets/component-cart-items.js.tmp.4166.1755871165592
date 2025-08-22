@@ -168,7 +168,7 @@ class CartItemsComponent extends Component {
 
         // Sync bundle quantities after successful cart update (with small delay to ensure cart state is consistent)
         setTimeout(() => {
-          this.#syncNestedQuantities();
+          this.#syncBundleQuantities();
         }, 100);
       })
       .catch((error) => {
@@ -370,8 +370,9 @@ class CartItemsComponent extends Component {
           console.error('Failed to remove orphaned deposit:', await changeResponse.text());
         }
       }
+    }
     } catch (error) {
-      console.error('Error syncing parent-child quantities:', error);
+      console.error('Error syncing bundle quantities:', error);
     }
   }
 
