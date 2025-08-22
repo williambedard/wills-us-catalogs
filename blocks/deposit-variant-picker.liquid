@@ -309,22 +309,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to add both main product and deposit in single request
   async function addBothToCart(mainVariantId, quantity, depositVariantId, depositAmount, depositOption) {
     try {
-      const bundleId = Date.now().toString();
       const depositQuantity = depositAmount / 100;
       
       // Get variant metafields for main product
       const variantMetafields = window.productMetafields?.[mainVariantId];
       
-      // Build main product properties
+      // Build main product properties (no bundle_id needed with parent_id approach)
       const mainProperties = {
-        '_bundle_id': bundleId,
         'deposit_option': depositOption
       };
       
-      // Build deposit product properties
+      // Build deposit product properties with parent relationship
       const depositProperties = {
         '_deposit_for': 'main_product',
-        '_bundle_id': bundleId,
         '_is_deposit_product': 'true',
         'deposit_option': depositOption,
         '_calculated_amount': '$' + depositAmount.toFixed(2)
@@ -357,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {
           id: parseInt(depositVariantId), 
           quantity: depositQuantity,
+          parent_id: parseInt(mainVariantId), // Use Shopify's nested cart lines feature
           properties: depositProperties
         }
       ];
