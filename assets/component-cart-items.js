@@ -389,6 +389,86 @@ class CartItemsComponent extends Component {
     
     return depositQuantityPerUnit;
   }
+
+  /**
+   * Updates main product properties to show multiplied quantities based on cart quantity
+   * @param {Object} mainItem - The main cart item
+   * @param {number} lineNumber - The line number in cart
+   */
+  async #updateMainProductProperties(mainItem, lineNumber) {
+    // Check if we need to update component quantities based on metafields
+    const originalInjectors = this.#extractOriginalQuantity(mainItem.properties?.Injectors);
+    const originalFuelPumps = this.#extractOriginalQuantity(mainItem.properties?.['High Pressure Fuel Pumps']);
+    const originalFuelLines = this.#extractOriginalQuantity(mainItem.properties?.['Fuel Lines']);
+    
+    if (originalInjectors === null && originalFuelPumps === null && originalFuelLines === null) {
+      return; // No metafield quantities to update
+    }
+    
+    // Build updated properties
+    const updatedProperties = { ...mainItem.properties };
+    
+    if (originalInjectors !== null) {
+      updatedProperties['Injectors'] = `${originalInjectors * mainItem.quantity}`;
+    }
+    if (originalFuelPumps !== null) {
+      updatedProperties['High Pressure Fuel Pumps'] = `${originalFuelPumps * mainItem.quantity} units`;
+    }
+    if (originalFuelLines !== null) {
+      updatedProperties['Fuel Lines'] = `${originalFuelLines * mainItem.quantity}`;
+    }
+    
+    // Check if properties actually need updating
+    const needsUpdate = 
+      (originalInjectors !== null && updatedProperties['Injectors'] !== mainItem.properties?.Injectors) ||
+      (originalFuelPumps !== null && updatedProperties['High Pressure Fuel Pumps'] !== mainItem.properties?.['High Pressure Fuel Pumps']) ||
+      (originalFuelLines !== null && updatedProperties['Fuel Lines'] !== mainItem.properties?.['Fuel Lines']);
+    
+    if (needsUpdate) {
+      const body = JSON.stringify({
+        line: lineNumber,
+        quantity: mainItem.quantity, // Keep same quantity
+        properties: updatedProperties,
+        sections: this.sectionId,
+        sections_url: window.location.pathname,
+      });
+      
+      const changeResponse = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body
+      });
+      
+      if (changeResponse.ok) {
+        const responseText = await changeResponse.text();
+        const parsedResponse = JSON.parse(responseText);
+        if (parsedResponse.sections && parsedResponse.sections[this.sectionId]) {
+          morphSection(this.sectionId, parsedResponse.sections[this.sectionId]);
+        }
+      }
+    }
+  }
+
+  /**
+   * Extracts the original quantity from a property string, handling both simple numbers and "X units" format
+   * @param {string} propertyValue - The property value (e.g., "8", "16", "2 units")
+   * @returns {number|null} - The base quantity per unit, or null if not a quantity property
+   */
+  #extractOriginalQuantity(propertyValue) {
+    if (!propertyValue) return null;
+    
+    // Extract number from various formats: "8", "16", "2 units"
+    const match = propertyValue.match(/^(\d+)/);
+    if (!match) return null;
+    
+    const currentValue = parseInt(match[1]);
+    // For now, assume the original metafield value is what we see when quantity = 1
+    // TODO: This could be enhanced to store original values more precisely
+    return currentValue; 
+  }
 }
 
 if (!customElements.get('cart-items-component')) {
