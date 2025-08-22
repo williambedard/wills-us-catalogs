@@ -280,8 +280,8 @@ class CartItemsComponent extends Component {
             bundles[bundleId] = { main: null, deposit: null };
           }
           
-          // Determine if this is main or deposit product based on deposit_option or _is_deposit_product property
-          if (item.properties?.deposit_option && item.properties?._is_deposit_product !== 'true') {
+          // Determine if this is main or deposit product based on _deposit_option or _is_deposit_product property
+          if (item.properties?._deposit_option && item.properties?._is_deposit_product !== 'true') {
             bundles[bundleId].main = { item, lineNumber: index + 1 }; // Shopify cart lines are 1-indexed
           } else if (item.properties?._is_deposit_product === 'true') {
             bundles[bundleId].deposit = { item, lineNumber: index + 1 };

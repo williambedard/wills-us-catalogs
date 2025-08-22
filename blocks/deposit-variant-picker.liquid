@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Build main product properties
       const mainProperties = {
         '_bundle_id': bundleId,
-        'deposit_option': depositOption
+        '_deposit_option': depositOption
       };
       
       // Build deposit product properties
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '_deposit_for': 'main_product',
         '_bundle_id': bundleId,
         '_is_deposit_product': 'true',
-        'deposit_option': depositOption,
+        '_deposit_option': depositOption,
         '_calculated_amount': '$' + depositAmount.toFixed(2)
       };
       
