@@ -1,0 +1,303 @@
+
+<script
+  src="{{ 'marquee.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<marquee-component
+  class="scrolling-banner section color-{{ section.settings.color_scheme }}"
+  style="
+    --marquee-direction: {{ section.settings.movement_direction }};
+    --banner-padding-block: {{ section.settings.padding_block }}px;
+    --banner-font-size: {{ section.settings.font_size }};
+    --banner-font-weight: {{ section.settings.font_weight }};
+    --banner-letter-spacing: {{ section.settings.letter_spacing }};
+    --banner-gap: {{ section.settings.gap_between_items }}px;
+  "
+  data-speed-factor="{{ section.settings.speed_factor }}"
+  data-movement-direction="{{ section.settings.movement_direction }}"
+>
+  <div
+    class="scrolling-banner__wrapper"
+    ref="wrapper"
+  >
+    <div
+      class="scrolling-banner__content"
+      ref="content"
+    >
+      <div
+        class="scrolling-banner__repeated-items"
+        ref="marqueeItems[]"
+      >
+        {% for block in section.blocks %}
+          {% case block.type %}
+            {% when 'text' %}
+              <div class="scrolling-banner__text" {{ block.shopify_attributes }}>
+                {{ block.settings.text }}
+              </div>
+            {% when 'separator' %}
+              <div class="scrolling-banner__separator" {{ block.shopify_attributes }}>
+                {{ block.settings.separator_character }}
+              </div>
+          {% endcase %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</marquee-component>
+
+{% stylesheet %}
+  .scrolling-banner {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    padding-block: var(--banner-padding-block);
+  }
+
+  .scrolling-banner__wrapper {
+    display: flex;
+    gap: var(--banner-gap);
+    width: fit-content;
+    white-space: nowrap;
+  }
+
+  .scrolling-banner__content {
+    min-width: max-content;
+    display: flex;
+    gap: var(--banner-gap);
+  }
+
+  .scrolling-banner__repeated-items {
+    min-width: max-content;
+    display: flex;
+    gap: var(--banner-gap);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scrolling-banner__text {
+    font-size: var(--banner-font-size);
+    font-weight: var(--banner-font-weight);
+    letter-spacing: var(--banner-letter-spacing);
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--color-foreground);
+    font-family: var(--font-body--family);
+  }
+
+  .scrolling-banner__separator {
+    font-size: var(--banner-font-size);
+    font-weight: var(--banner-font-weight);
+    color: var(--color-foreground);
+    opacity: 0.6;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    marquee-component:not([data-disabled]) .scrolling-banner__wrapper {
+      animation: marquee-motion var(--marquee-speed) linear infinite var(--marquee-direction);
+    }
+  }
+
+  @keyframes marquee-motion {
+    to {
+      transform: translate3d(calc(-50% - (var(--banner-gap) / 2)), 0, 0);
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .scrolling-banner__text {
+      font-size: calc(var(--banner-font-size) * 0.75);
+    }
+    .scrolling-banner__separator {
+      font-size: calc(var(--banner-font-size) * 0.75);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Scrolling Banner",
+  "tag": "section",
+  "class": "scrolling-banner-wrapper section-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Animation"
+    },
+    {
+      "type": "select",
+      "id": "movement_direction",
+      "label": "Movement direction",
+      "options": [
+        {
+          "value": "reverse",
+          "label": "Left to Right"
+        },
+        {
+          "value": "normal",
+          "label": "Right to Left"
+        }
+      ],
+      "default": "normal"
+    },
+    {
+      "type": "range",
+      "id": "speed_factor",
+      "label": "Speed",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "default": 25,
+      "info": "Higher value = faster scrolling"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "text",
+      "id": "font_size",
+      "label": "Font size",
+      "default": "2rem",
+      "info": "Use CSS units (rem, px, em). Example: 2rem, 32px"
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold"
+        },
+        {
+          "value": "900",
+          "label": "Black"
+        }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "text",
+      "id": "letter_spacing",
+      "label": "Letter spacing",
+      "default": "-0.02em",
+      "info": "Use CSS units. Example: -0.02em, 1px"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_block",
+      "label": "Vertical padding",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "gap_between_items",
+      "label": "Gap between items",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "New Arrivals"
+        }
+      ]
+    },
+    {
+      "type": "separator",
+      "name": "Separator",
+      "settings": [
+        {
+          "type": "text",
+          "id": "separator_character",
+          "label": "Separator character",
+          "default": "•",
+          "info": "Common separators: • | / ★ ◆"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Scrolling Banner",
+      "category": "Banners",
+      "blocks": [
+        {
+          "type": "text",
+          "settings": {
+            "text": "New Arrivals"
+          }
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "type": "text",
+          "settings": {
+            "text": "Free Shipping Over $50"
+          }
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "type": "text",
+          "settings": {
+            "text": "Shop the Latest Collection"
+          }
+        },
+        {
+          "type": "separator"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
