@@ -10,7 +10,7 @@
 {
   "parent": "index.json",
   "context": {
-    "b2b": true
+    "market": "all-b2b"
   },
   "sections": {
     "hero_jVaWmY": {
